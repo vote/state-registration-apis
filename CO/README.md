@@ -7,6 +7,8 @@ You can use this FTP login to get a daily CSV with all the information about
 people who have registered using your registration link. This CSV includes
 full voter file data: names, years of birth, etc.
 
+You can learn more about the system from [this brochure](https://www.sos.state.co.us/pubs/elections/VoterRegDrive/files/OnlineVRDBrochure.pdf)
+
 ## Process
 
 1. Go to [https://www.sos.state.co.us/pubs/elections/VoterRegDrive/VRDhome.html](https://www.sos.state.co.us/pubs/elections/VoterRegDrive/VRDhome.html) and register as a Voter Registration Drive. You'll need to make an account, take the online training class, and pass an online test.
