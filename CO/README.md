@@ -12,6 +12,6 @@ You can learn more about the system from [this brochure](https://www.sos.state.c
 ## Process
 
 1. Go to [https://www.sos.state.co.us/pubs/elections/VoterRegDrive/VRDhome.html](https://www.sos.state.co.us/pubs/elections/VoterRegDrive/VRDhome.html) and register as a Voter Registration Drive. You'll need to make an account, take the online training class, and pass an online test.
-2. After passing the test, fill out [https://www.sos.state.co.us/pubs/elections/VoterRegDrive/files/VRDIntent.pdf](https://www.sos.state.co.us/pubs/elections/VoterRegDrive/files/VRDIntent.pdf) and email it to vrd@sos.state.co.us. Make sure to check the box in section 5.
+2. After passing the test, fill out [https://www.sos.state.co.us/pubs/elections/VoterRegDrive/files/VRDIntent.pdf](https://www.sos.state.co.us/pubs/elections/VoterRegDrive/files/VRDIntent.pdf) and email it to vrd@sos.state.co.us. Make sure to check the box in section 5. Note that you will need to have an "Agent", who must be a resident of Colorado -- they won't need to do anything, they just need to be listed on the paperwork.
 3. You'll hear back from the VRD office within a few days with your acceptance. You'll be given a unique URL to send voters to, and a login to the state FTP server to pull the voter registration data.
 4. A day or two later, you'll receive an email with your FTP login credentials.
