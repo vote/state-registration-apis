@@ -79,9 +79,9 @@ information.
 | State | Integration Type | Documentation |
 | --- | --- | --- |
 | California | Prefilling Links via API call and token | TODO |
-| Colorado | Tracking Links (full voter file data) via URL Parameter | TODO |
+| Colorado | Tracking Links (full voter file data) via URL Parameter | [Docs](CO/README.md) |
 | Michigan | Full Registration API | TODO |
 | Nevada | Tracking Links | TODO |
-| Pennsylvania | Full Registration API | TODO |
+| Pennsylvania | Full Registration API | [Docs](PA/README.md)  |
 | Virginia | Full Registration API | TODO |
 | Washington | Prefilling Links via URL parameters | TODO |
