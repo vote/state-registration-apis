@@ -3,3 +3,4 @@ lxml
 autoflake
 isort
 black
+pytest

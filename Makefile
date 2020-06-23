@@ -9,3 +9,7 @@ lint:
 		ovrlib/ && \
 		isort --recursive ovrlib/ && \
 		black ovrlib/
+
+
+test:
+	python -m pytest .

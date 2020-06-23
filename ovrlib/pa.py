@@ -58,7 +58,16 @@ class Session:
         self.api_key = api_key
         self.staging = staging
         self.language = language
-        self.setup()
+        if api_key:
+            self.setup()
+        else:
+            # just enough for unit tests
+            self.unit_type = {
+                "apartment": "apt",
+            }
+            self.unit_type_reverse = {
+                "apt": "apartment",
+            }
 
     def get_url(self, action):
         if self.staging:
@@ -209,8 +218,69 @@ class Session:
                 pass
 
         self.xml_template = self.do_request("GETXMLTEMPLATE")
+        print(json.dumps(self.unit_type, indent=4))
+        print(json.dumps(self.unit_type_reverse, indent=4))
+
+    def normalize_address_unit(self, addr):
+        """
+        This takes a dict with one or more of [address1, address2,
+        unittype, unitnumber] fields.  If the unit type/number are omitted, and
+        a recognized unit is found in the address line(s), it will be moved into the
+        dedicated unittype+unitnumber fields.
+        """
+        if addr.get("unittype") is not None or addr.get("unitnumber") is not None:
+            return
+
+        # first try address2 field
+        if "address2" in addr:
+            m = re.compile(r"^#?(\d+)$").match(addr["address2"].strip())
+            if m:
+                addr["unittype"] = "UNIT"
+                addr["unitnumber"] = m[1]
+                del addr["address2"]
+                return
+
+            m = re.compile(r"^(\w+)\.? (\d+)$").match(addr["address2"].strip())
+            if m:
+                if m[1].lower() in self.unit_type:
+                    del addr["address2"]
+                    addr["unittype"] = self.unit_type[m[1].lower()].upper()
+                    addr["unitnumber"] = m[2]
+                    return
+                if m[1].lower() in self.unit_type_reverse:
+                    del addr["address2"]
+                    addr["unittype"] = m[1].upper()
+                    addr["unitnumber"] = m[2]
+                    return
+
+        # then look for suffix on address1
+        if "address1" in addr:
+            # try trailing portion of address1
+            p1 = re.compile(r"^(.*) #(\d+)$")
+            p2 = re.compile(r"^(.*) (\w+)\.? (\d+)$")
+
+            m = p1.match(addr["address1"].strip())
+            if m:
+                addr["address1"] = m[1].strip()
+                addr["unittype"] = "UNIT"
+                addr["unitnumber"] = m[2]
+                return
+
+            m = p2.match(addr["address1"].strip())
+            if m:
+                if m[2].lower() in self.unit_type:
+                    addr["address1"] = m[1]
+                    addr["unittype"] = self.unit_type[m[2].lower()].upper()
+                    addr["unitnumber"] = m[3]
+                    return
+                if m[2].lower() in self.unit_type_reverse:
+                    addr["address1"] = m[1]
+                    addr["unittype"] = m[2].upper()
+                    addr["unitnumber"] = m[3]
+                    return
 
     def register(self, registration, signature=None, signature_type=None, is_new=True):
+
         """
         Submit a voter registratio
         """
@@ -255,6 +325,8 @@ class Session:
             if k not in REQUIRED and k not in OPTIONAL:
                 raise InvalidRegistrationError(f"registration field {k} not recognized")
 
+        self.normalize_address_unit(registration)
+
         vals = {
             "batch": "0",
             "united-states-citizen": "1",
@@ -266,27 +338,6 @@ class Session:
                 raise InvalidRegistrationError(f"registration field {k} is required")
             if k == "date_of_birth":
                 vals["DateOfBirth"] = registration[k].strftime("%Y-%m-%d")
-            elif k == "address1":
-                # attempt to extract out unit/apt numbers
-                address = registration[k]
-                p = re.compile(r"^(.+) #(\d+)$")
-                m = p.match(address)
-                if m:
-                    address = m[1]
-                    vals["unittype"] = "UNIT"
-                    vals["unitnumber"] = m[2]
-                else:
-                    p = re.compile(r"^(.+) ([\w]+)\.? (\d+)$")
-                    m = p.match(address)
-                    if m:
-                        if m[2].lower() in self.unit_type:
-                            vals["unittype"] = self.unit_type[m[2].lower()].upper()
-                            vals["unitnumber"] = m[3]
-                        elif m[2].lower in self.unit_type_reverse:
-                            vals["unittype"] = m[2].upper()
-                            vals["unitnumber"] = m[3]
-                vals["address"] = address
-
             elif k == "county":
                 county = registration[k].lower()
                 if county not in self.county:
