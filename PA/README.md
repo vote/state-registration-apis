@@ -14,7 +14,7 @@ TODO: What tracking info do we get?
 3. When asked if you have an existing account, say No. You'll be taken the to API registration page.
 4. After submitting your API registration, log back in and accept the terms of use (you might have to wait a bit before it will let you see the terms of use).
 5. Wait for the elections office to email you with an approval. You'll get a read-only staging API key. They'll probably want to know your implementation timeline.
-6. TODO: How to go from a read-only staging API key to a read-write staging API key.
+6. You'll probably want to get your API key upgrading to a read-write staging API key (by default, they only give you a read-only staging API key). To do this, just email the elections office back and ask for read-write staging access.
 7. Implement your website or application, using the staging API key.
 8. Reply to the elections office to arrange for testing.
 9. After you've completed testing, you'll be given a production API key and can go live.
