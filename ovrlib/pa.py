@@ -1,5 +1,4 @@
 import base64
-import copy
 import json
 import logging
 import re
@@ -32,6 +31,188 @@ These parts of the API are optional and not current supported:
 
 """
 
+COUNTY = {
+    "adams": "2290",
+    "allegheny": "2291",
+    "armstrong": "2292",
+    "beaver": "2293",
+    "bedford": "2294",
+    "berks": "2295",
+    "blair": "2296",
+    "bradford": "2297",
+    "bucks": "2298",
+    "butler": "2299",
+    "cambria": "2300",
+    "cameron": "2301",
+    "carbon": "2302",
+    "centre": "2303",
+    "chester": "2304",
+    "clarion": "2305",
+    "clearfield": "2306",
+    "clinton": "2307",
+    "columbia": "2308",
+    "crawford": "2309",
+    "cumberland": "2310",
+    "dauphin": "2311",
+    "delaware": "2312",
+    "elk": "2313",
+    "erie": "2314",
+    "fayette": "2315",
+    "forest": "2316",
+    "franklin": "2317",
+    "fulton": "2318",
+    "greene": "2319",
+    "huntingdon": "2320",
+    "indiana": "2321",
+    "jefferson": "2322",
+    "juniata": "2323",
+    "lackawanna": "2324",
+    "lancaster": "2325",
+    "lawrence": "2326",
+    "lebanon": "2327",
+    "lehigh": "2328",
+    "luzerne": "2329",
+    "lycoming": "2330",
+    "mckean": "2331",
+    "mercer": "2332",
+    "mifflin": "2333",
+    "monroe": "2334",
+    "montgomery": "2335",
+    "montour": "2336",
+    "northampton": "2337",
+    "northumberland": "2338",
+    "perry": "2339",
+    "philadelphia": "2340",
+    "pike": "2341",
+    "potter": "2342",
+    "schuylkill": "2343",
+    "snyder": "2344",
+    "somerset": "2345",
+    "sullivan": "2346",
+    "susquehanna": "2347",
+    "tioga": "2348",
+    "union": "2349",
+    "venango": "2350",
+    "warren": "2351",
+    "washington": "2352",
+    "wayne": "2353",
+    "westmoreland": "2354",
+    "wyoming": "2355",
+    "york": "2356",
+}
+
+UNIT_TYPE = {
+    "apartment": "APT",
+    "basement": "BSM",
+    "box #": "BOX",
+    "building": "BLD",
+    "department": "DEP",
+    "floor": "FL",
+    "front": "FRN",
+    "hanger": "HNG",
+    "lobby": "LBB",
+    "lot": "LOT",
+    "lower": "LOW",
+    "office": "OFC",
+    "penthouse": "PH",
+    "pier": "PIE",
+    "poll": "POL",
+    "rear": "REA",
+    "room": "RM",
+    "side": "SID",
+    "slip": "SLI",
+    "space": "SPC",
+    "stop": "STO",
+    "suite": "STE",
+    "trailer": "TRLR",
+    "unit": "UNI",
+    "upper": "UPP",
+    "cabin": "CBN",
+    "hub": "HUB",
+    "student mailing center": "SMC",
+    "townhouse": "TH",
+}
+
+PARTY = {
+    "democratic": "D",
+    "republican": "R",
+    "green": "GR",
+    "libertarian": "LN",
+    "none (no affiliation)": "NF",
+    "other": "OTH",
+}
+
+ERROR = {
+    "VR_WAPI_InvalidAccessKey": "Access Key is Invalid.",
+    "VR_WAPI_InvalidAction": "Action not found.",
+    "VR_WAPI_InvalidAPIbatch": "Batch value is Invalid.",
+    "VR_WAPI_InvalidOVRCounty": "Your county of residence is required.",
+    "VR_WAPI_InvalidOVRDL": " please provide valid DL or pick continuesubmit checkbox.",
+    "VR_WAPI_InvalidOVRDLformat": "Please enter a valid 8 digit PA driver's license or PennDOT ID card number.",
+    "VR_WAPI_InvalidOVRDOB": "Please input a valid birth date.",
+    "VR_WAPI_InvalidOVRemail": "The format of the email address is incorrect. Please correct and try again.",
+    "VR_WAPI_InvalidOVRmailingzipcode": "The zip code must be 5 digits or 9 digits (zip code + 4).",
+    "VR_WAPI_InvalidOVRphone": "The phone number provided is not valid. Please enter a valid phone number.",
+    "VR_WAPI_InvalidOVRPreviousCounty": "Previous County of Registration is required for an Address Change application",
+    "VR_WAPI_InvalidOVRPreviouszipcode": "Please enter a valid 5 digit zip code.",
+    "VR_WAPI_InvalidOVRSSNformat": "Please enter the LAST FOUR digits of your Social Security number.",
+    "VR_WAPI_InvalidOVRzipcode": "Please enter a valid 5 digit zip code.",
+    "VR_WAPI_invalidpreviousregyear": "Please input valid year.",
+    "VR_WAPI_InvalidReason": "Please select any one reason - New Application or Update Application , both are not allowed",
+    "VR_WAPI_MissingAccessKey": "Please provide the access key in [sysparm_AuthKey] parameter in the link to proceed.",
+    "VR_WAPI_MissingAddress": "A complete mailing or residential address is required for your application to be submitted online. Please use the link at the top of the page to print a blank voter registration application. Please complete, sign and date it then mail it to your county voter registration office. Do not FAX your application form.",
+    "VR_WAPI_MissingAPIaction": "Please provide the GET action in [sysparm_action] parameter in the link to proceed.",
+    "VR_WAPI_MissingCounty": "Please provide the county in [sysparm_County] parameter in the link to proceed.",
+    "VR_WAPI_MissingLanguage": "Please provide the Language code in [sysparm_Language] parameter in the link to proceed.",
+    "VR_WAPI_MissingOVRassistancedeclaration": "Please indicate assistance was provided with the completion of this form.",
+    "VR_WAPI_MissingOVRcity": "Your city is required.",
+    "VR_WAPI_MissingOVRcounty": "Your county of residence is required.",
+    "VR_WAPI_MissingOVRdeclaration1": "Please confirm you have read and agree to the terms.",
+    "VR_WAPI_MissingOVRDL": "Please supply either a PA driver's license or PennDOT ID card number, the last four digits of your SSN, or click the check box.",
+    "VR_WAPI_MissingOVRfirstname": "Your first name is required.",
+    "VR_WAPI_MissingOVRinterpreterlang": "Required if interpreter is checked",
+    "VR_WAPI_MissingOVRisageover18": "Will you be 18 years or older on or before election day? You must provide a response before continuing. ",
+    "VR_WAPI_MissingOVRisuscitizen": "Are you a citizen of the U.S.? You must provide a response before continuing.",
+    "VR_WAPI_MissingOVRlastname": "Your last name is required.",
+    "VR_WAPI_MissingOVROtherParty": "Warning - Party is not selected. If Other is selected, the Other party text box should be completed.",
+    "VR_WAPI_MissingOVRPoliticalParty": "Warning - Party is not selected. If Other is selected, the Other party text box should be completed.",
+    "VR_WAPI_MissingOVRPreviousAddress": "Address of Previous Registration is required for an Address Change application",
+    "VR_WAPI_MissingOVRPreviousCity": "City of Previous Registration is required for an Address Change application",
+    "VR_WAPI_MissingOVRPreviousFirstName": "Previous First Name is required for a Name Change application",
+    "VR_WAPI_MissingOVRPreviousLastName": "Previous Last Name is required for a Name Change application",
+    "VR_WAPI_MissingOVRPreviousZipCode": "Zip of Previous Registration is required for an Address Change application",
+    "VR_WAPI_MissingOVRSSNDL": "Please supply either a PA driver's license or PennDOT ID card number, the last four digits of your SSN, or click the check box.",
+    "VR_WAPI_MissingOVRstreetaddress": "Your street address is required.",
+    "VR_WAPI_MissingOVRtypeofassistance": "Please select the type of assistance required.",
+    "VR_WAPI_MissingOVRzipcode": "Your zip code is required",
+    "VR_WAPI_MissingReason": "Please check at least one box.",
+    "VR_WAPI_PennDOTServiceDown": "PennDOT server is down.",
+    "VR_WAPI_RequestError": "WebAPi request is Invalid",
+    "VR_WAPI_ServiceError": "Signature service is down.",
+    "VR_WAPI_SystemError": "We're sorry, but the system cannot verify your information and complete your application right now. Try again.",
+    "VR_WAPI_InvalidOVRAssistedpersonphone": "The phone number provided is not valid. Please enter a valid phone number.",
+    "VR_WAPI_InvalidOVRsecondemail": "The format of the email address is incorrect. Please correct and try again.",
+    "VR_WAPI_Invalidsignaturestring": "Your upload was not successful. Please try again.",
+    "VR_WAPI_Invalidsignaturetype": "Please choose one of the following file types: .TIFF, .JPG, .BMP and .PNG.",
+    "VR_WAPI_Invalidsignaturesize": "Please upload an image file size less than 5MB.",
+    "VR_WAPI_Invalidsignaturedimension": "The image size should be equal to 180 x 60 pixels.",
+    "VR_WAPI_Invalidsignaturecontrast": "Your upload was not successful. Please try again.",
+    "VR_WAPI_MissingOVRParty": "Please select a political party.",
+    "VR_WAPI_InvalidOVRPoliticalParty": "Please select a political party.",
+    "VR_WAPI_Invalidsignatureresolution": "Your uploaded signature does not meet the 96.00 dpi requirements. Please upload an image file meeting or exceeding this requirement.",
+    "VR_WAPI_MissingOVRmailinballotaddr": "Missing MailIn Ballot Address",
+    "VR_WAPI_MissingOVRmailincity": "Missing MailIn City",
+    "VR_WAPI_MissingOVRmailinstate": "Missing MailIn State",
+    "VR_WAPI_InvalidOVRmailinzipcode": "Missing MailIn Zipcode",
+    "VR_WAPI_MissingOVRmailinlivedsince": "Missing MailIn lived since",
+    "VR_WAPI_MissingOVRmailindeclaration": "Missing MailIn Declaration",
+    "VR_WAPI_MailinNotEligible": "MailIn Not Eligible",
+    "VR_WAPI_InvalidIsTransferPermanent": "The transfer permanent flag provided is not valid",
+}
+
+XML_PREFIX = '<APIOnlineApplicationData xmlns="OVRexternaldata"><record>'
+XML_SUFFIX = "</record></APIOnlineApplicationData>"
+
 
 class InvalidAccessKeyError(Exception):
     pass
@@ -58,16 +239,11 @@ class Session:
         self.api_key = api_key
         self.staging = staging
         self.language = language
-        if api_key:
-            self.setup()
-        else:
-            # just enough for unit tests
-            self.unit_type = {
-                "apartment": "apt",
-            }
-            self.unit_type_reverse = {
-                "apt": "apartment",
-            }
+
+        self.county = COUNTY
+        self.unit_type = UNIT_TYPE
+        self.party = PARTY
+        self.error = ERROR
 
     def get_url(self, action):
         if self.staging:
@@ -124,9 +300,9 @@ class Session:
 
         return root
 
-    def setup(self):
+    def fetch_constants(self):
         """
-        Make initial read-only queries to the PA OVR API to gather constants and templates.
+        Make read-only queries to the PA OVR API to produce the constants
         """
 
         def map_subitem(node, keytag, valtag, target):
@@ -145,6 +321,7 @@ class Session:
         for i in root:
             if i.tag == "MessageText":
                 map_subitem(i, "ErrorCode", "ErrorText", self.error)
+        print("ERRORS = %s\n" % json.dumps(self.error, indent=4))
 
         root = self.do_request("GETAPPLICATIONSETUP")
         assert root.tag == "NewDataSet"
@@ -156,7 +333,6 @@ class Session:
         self.gender = {}
         self.race = {}
         self.unit_type = {}
-        self.unit_type_reverse = {}
         self.assistance_type = {}
         self.other = {}
 
@@ -199,9 +375,6 @@ class Session:
                 map_subitem_lower(
                     i, "UnitTypesDescription", "UnitTypesCode", self.unit_type
                 )
-                map_subitem_lower(
-                    i, "UnitTypesCode", "UnitTypesDescription", self.unit_type_reverse
-                )
             elif i.tag == "AssistanceType":
                 map_subitem_lower(
                     i,
@@ -226,7 +399,9 @@ class Session:
             else:
                 pass
 
-        self.xml_template = self.do_request("GETXMLTEMPLATE")
+        print("COUNTY = %s\n" % json.dumps(self.county, indent=4))
+        print("UNIT_TYPE = %s\n" % json.dumps(self.unit_type, indent=4))
+        print("PARTY = %s\n" % json.dumps(self.party, indent=4))
 
     def normalize_address_unit(self, addr):
         """
@@ -254,7 +429,7 @@ class Session:
                     addr["unittype"] = self.unit_type[m[1].lower()]
                     addr["unitnumber"] = m[2]
                     return
-                if m[1].lower() in self.unit_type_reverse:
+                if m[1].upper() in self.unit_type.values():
                     del addr["address2"]
                     addr["unittype"] = m[1].upper()
                     addr["unitnumber"] = m[2]
@@ -280,7 +455,7 @@ class Session:
                     addr["unittype"] = self.unit_type[m[2].lower()]
                     addr["unitnumber"] = m[3]
                     return
-                if m[2].lower() in self.unit_type_reverse:
+                if m[2].upper() in self.unit_type.values():
                     addr["address1"] = m[1]
                     addr["unittype"] = m[2].upper()
                     addr["unitnumber"] = m[3]
@@ -420,14 +595,10 @@ class Session:
                 "signatureimage"
             ] = f"data:image/{signature_type};base64,{base64.b64encode(signature)}"
 
-        root = copy.deepcopy(self.xml_template)
-        for record in root:
-            for i in record:
-                k = i.tag.split("}")[1]
-                if k in vals:
-                    i.text = vals[k]
-
-        xml = etree.tostring(root).decode("utf-8")
+        xml = XML_PREFIX
+        for k, v in vals.items():
+            xml += f"<{k}>{v}</{k}>"
+        xml += XML_SUFFIX
         logger.debug(f"Submission: {json.dumps(xml)}")
 
         root = self.do_request("SETAPPLICATION", data=json.dumps(xml))
