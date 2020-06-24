@@ -160,7 +160,7 @@ class Session:
                 elif j.tag == valtag:
                     v = j.text
             if k is not None and v is not None:
-                target[k.lower()] = v.lower()
+                target[k.lower()] = v
 
         other_map = {
             "NextElection": ("NextElection", "next_election"),
@@ -218,8 +218,6 @@ class Session:
                 pass
 
         self.xml_template = self.do_request("GETXMLTEMPLATE")
-        print(json.dumps(self.unit_type, indent=4))
-        print(json.dumps(self.unit_type_reverse, indent=4))
 
     def normalize_address_unit(self, addr):
         """
@@ -244,7 +242,7 @@ class Session:
             if m:
                 if m[1].lower() in self.unit_type:
                     del addr["address2"]
-                    addr["unittype"] = self.unit_type[m[1].lower()].upper()
+                    addr["unittype"] = self.unit_type[m[1].lower()]
                     addr["unitnumber"] = m[2]
                     return
                 if m[1].lower() in self.unit_type_reverse:
@@ -270,7 +268,7 @@ class Session:
             if m:
                 if m[2].lower() in self.unit_type:
                     addr["address1"] = m[1]
-                    addr["unittype"] = self.unit_type[m[2].lower()].upper()
+                    addr["unittype"] = self.unit_type[m[2].lower()]
                     addr["unitnumber"] = m[3]
                     return
                 if m[2].lower() in self.unit_type_reverse:
@@ -299,6 +297,7 @@ class Session:
         }
 
         OPTIONAL = {
+            "federal_voter": None,
             "middle_name": "MiddleName",
             "suffix": None,
             "address2": "streetaddress2",
@@ -310,6 +309,7 @@ class Session:
             "unitnumber": None,
             "dl_number": "drivers-license",
             "ssn4": "ssn4",
+            # if change of name, address
             "previous_first_name": "previousregfirstname",
             "previous_middle_name": "previousregmiddlename",
             "previous_last_name": "previousreglastname",
@@ -319,6 +319,19 @@ class Session:
             "previous_zipcode": "previousregzip",
             "previous_county": "previousregcounty",
             "previous_year": "previousregyear",
+            # mailing address
+            "mailing_address": "Mailingaddress",
+            "mailing_city": "mailingcity",
+            "mailing_state": "mailingstate",
+            "mailing_zipcode": "mailingzipcode",
+            # VBM
+            "mailin_ballot_request": "ismailin",
+            "mailin_ballot_to_registration_address": None,
+            "mailin_ballot_to_mailing_address": None,
+            "mailin_ballot_address": "mailinballotaddr",
+            "mailin_ballot_city": "mailincity",
+            "mailin_ballot_state": "mailincity",
+            "mailin_ballot_zipcode": "mailinzipcode",
         }
 
         for k in registration.keys():
@@ -333,9 +346,13 @@ class Session:
             "eighteen-on-election-day": "1",
             "declaration1": "1",
         }
-        for k, v in REQUIRED.items():
+        for k in REQUIRED.keys():
             if k not in registration:
                 raise InvalidRegistrationError(f"registration field {k} is required")
+
+        for k, v in list(REQUIRED.items()) + list(OPTIONAL.items()):
+            if k not in registration:
+                continue
             if k == "date_of_birth":
                 vals["DateOfBirth"] = registration[k].strftime("%Y-%m-%d")
             elif k == "county":
@@ -356,18 +373,12 @@ class Session:
                 else:
                     vals["politicalparty"] = self.party["other"]
                     vals["otherpoliticalparty"] = party
-            elif v:
-                vals[v] = registration[k]
-            else:
-                raise RuntimeError(f"unhandled field {k}")
-
-        for k, v in OPTIONAL.items():
-            if k not in registration:
-                continue
-            if k == "suffix":
+            elif k == "suffix":
                 # NOTE: the API enumerates specific suffixes; not sure what happens if we
                 # submit one that is not listed.
-                vals["TitleSuffix"] = registration[k].upper()
+                vals["TitleSuffix"] = registration[k]
+            elif k == "federal_voter":
+                vals["isfederalvoter"] = "1" if v else "0"
             elif v:
                 vals[v] = registration[k]
             else:
@@ -381,8 +392,6 @@ class Session:
             vals["address-update"] = "1"
         else:
             vals["ispartychange"] = "1"
-
-        # FIXME: isfederalvoter
 
         if "dl_nubmer" not in registration:
             vals["continueAppSubmit"] = "1"
