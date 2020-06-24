@@ -26,7 +26,6 @@ These parts of the API are optional and not current supported:
   - email
   - need help to vote (+ preferred langauge)
   - is poll worker
-- vote-by-mail registration / mail-in ballot request
 
 
 """
