@@ -80,12 +80,21 @@ class Session:
     def do_request(self, action, data=None):
         url = self.get_url(action)
         if data:
-            response = requests.post(url, data=data)
+            response = requests.post(
+                url,
+                headers={
+                    "Content-Type": "application/json",
+                    "Cache-Control": "no-cache",
+                },
+                data=data,
+            )
         else:
             response = requests.get(url)
 
         logger.debug(f"{action} {response.status_code}")
-        # logger.debug(response.text)
+
+        if response.status_code != 200:
+            raise InvalidRegistrationError(f"HTTP status code {response.status_code}")
 
         xml_str = json.loads(response.text)
         root = etree.fromstring(xml_str)
@@ -421,7 +430,7 @@ class Session:
         xml = etree.tostring(root).decode("utf-8")
         logger.debug(f"Submission: {json.dumps(xml)}")
 
-        root = self.do_request("SETAPPLICATION")
+        root = self.do_request("SETAPPLICATION", data=json.dumps(xml))
         assert root.tag == "RESPONSE"
         application_id = None
         application_date = None
