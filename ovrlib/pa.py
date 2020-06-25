@@ -209,8 +209,7 @@ ERROR = {
     "VR_WAPI_InvalidIsTransferPermanent": "The transfer permanent flag provided is not valid",
 }
 
-XML_PREFIX = '<APIOnlineApplicationData xmlns="OVRexternaldata"><record>'
-XML_SUFFIX = "</record></APIOnlineApplicationData>"
+XML_TEMPLATE = "<APIOnlineApplicationData xmlns='OVRexternaldata'>  <record>    <batch></batch>    <FirstName></FirstName>    <MiddleName></MiddleName>    <LastName></LastName>    <TitleSuffix></TitleSuffix>    <united-states-citizen></united-states-citizen>    <eighteen-on-election-day></eighteen-on-election-day>    <isnewregistration></isnewregistration>    <name-update></name-update>    <address-update></address-update>    <ispartychange></ispartychange>    <isfederalvoter></isfederalvoter>    <DateOfBirth></DateOfBirth>    <Gender></Gender>    <Ethnicity></Ethnicity>    <Phone></Phone>    <Email></Email>    <streetaddress></streetaddress>    <streetaddress2></streetaddress2>    <unittype></unittype>    <unitnumber></unitnumber>    <city></city>    <zipcode></zipcode>    <donthavePermtOrResAddress></donthavePermtOrResAddress>    <county></county>    <municipality></municipality>    <mailingaddress></mailingaddress>    <mailingcity></mailingcity>    <mailingstate></mailingstate>    <mailingzipcode></mailingzipcode>    <drivers-license></drivers-license>    <ssn4></ssn4>    <signatureimage></signatureimage>    <continueAppSubmit></continueAppSubmit>    <donthavebothDLandSSN></donthavebothDLandSSN>    <politicalparty></politicalparty>    <otherpoliticalparty></otherpoliticalparty>    <needhelptovote></needhelptovote>    <typeofassistance></typeofassistance>    <preferredlanguage></preferredlanguage>    <voterregnumber></voterregnumber>    <previousreglastname></previousreglastname>    <previousregfirstname></previousregfirstname>    <previousregmiddlename></previousregmiddlename>    <previousregaddress></previousregaddress>    <previousregcity></previousregcity>    <previousregstate></previousregstate>    <previousregzip></previousregzip>    <previousregcounty></previousregcounty>    <previousregyear></previousregyear>    <declaration1></declaration1>    <assistedpersonname></assistedpersonname>    <assistedpersonAddress></assistedpersonAddress>    <assistedpersonphone></assistedpersonphone>    <assistancedeclaration2></assistancedeclaration2>    <ispollworker></ispollworker>    <bilingualinterpreter></bilingualinterpreter>    <pollworkerspeaklang></pollworkerspeaklang>    <secondEmail></secondEmail>    <ismailin></ismailin>    <istransferpermanent></istransferpermanent>    <mailinaddresstype></mailinaddresstype>    <mailinballotaddr></mailinballotaddr>    <mailincity></mailincity>    <mailinstate></mailinstate>    <mailinzipcode></mailinzipcode>    <mailinward></mailinward>    <mailinlivedsince></mailinlivedsince>    <mailindeclaration></mailindeclaration>  </record></APIOnlineApplicationData>"
 
 
 class InvalidAccessKeyError(Exception):
@@ -278,6 +277,8 @@ class Session:
         if root.tag == "RESPONSE":
             for i in root:
                 if i.tag != "ERROR":
+                    continue
+                if not i.text:
                     continue
                 if i.text == "VR_WAPI_InvalidAccessKey":
                     raise InvalidAccessKeyError(f"{i.text}: {self.error.get(i.text)}")
@@ -594,13 +595,16 @@ class Session:
                 "signatureimage"
             ] = f"data:image/{signature_type};base64,{base64.b64encode(signature)}"
 
-        xml = XML_PREFIX
-        for k, v in vals.items():
-            xml += f"<{k}>{v}</{k}>"
-        xml += XML_SUFFIX
+        root = etree.fromstring(XML_TEMPLATE)
+        for record in root:
+            for i in record:
+                k = i.tag.split("}")[1]   # strip of "{xmlns}" prefix
+                if k in vals:
+                    i.text = vals[k]
+        xml = etree.tostring(root).decode("utf-8")
         logger.debug(f"Submission: {json.dumps(xml)}")
 
-        root = self.do_request("SETAPPLICATION", data=json.dumps(xml))
+        root = self.do_request("SETAPPLICATION", data=json.dumps({"ApplicationData": xml}))
         assert root.tag == "RESPONSE"
         application_id = None
         application_date = None
