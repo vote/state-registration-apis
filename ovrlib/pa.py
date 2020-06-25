@@ -30,76 +30,6 @@ These parts of the API are optional and not current supported:
 
 """
 
-COUNTY = {
-    "adams": "2290",
-    "allegheny": "2291",
-    "armstrong": "2292",
-    "beaver": "2293",
-    "bedford": "2294",
-    "berks": "2295",
-    "blair": "2296",
-    "bradford": "2297",
-    "bucks": "2298",
-    "butler": "2299",
-    "cambria": "2300",
-    "cameron": "2301",
-    "carbon": "2302",
-    "centre": "2303",
-    "chester": "2304",
-    "clarion": "2305",
-    "clearfield": "2306",
-    "clinton": "2307",
-    "columbia": "2308",
-    "crawford": "2309",
-    "cumberland": "2310",
-    "dauphin": "2311",
-    "delaware": "2312",
-    "elk": "2313",
-    "erie": "2314",
-    "fayette": "2315",
-    "forest": "2316",
-    "franklin": "2317",
-    "fulton": "2318",
-    "greene": "2319",
-    "huntingdon": "2320",
-    "indiana": "2321",
-    "jefferson": "2322",
-    "juniata": "2323",
-    "lackawanna": "2324",
-    "lancaster": "2325",
-    "lawrence": "2326",
-    "lebanon": "2327",
-    "lehigh": "2328",
-    "luzerne": "2329",
-    "lycoming": "2330",
-    "mckean": "2331",
-    "mercer": "2332",
-    "mifflin": "2333",
-    "monroe": "2334",
-    "montgomery": "2335",
-    "montour": "2336",
-    "northampton": "2337",
-    "northumberland": "2338",
-    "perry": "2339",
-    "philadelphia": "2340",
-    "pike": "2341",
-    "potter": "2342",
-    "schuylkill": "2343",
-    "snyder": "2344",
-    "somerset": "2345",
-    "sullivan": "2346",
-    "susquehanna": "2347",
-    "tioga": "2348",
-    "union": "2349",
-    "venango": "2350",
-    "warren": "2351",
-    "washington": "2352",
-    "wayne": "2353",
-    "westmoreland": "2354",
-    "wyoming": "2355",
-    "york": "2356",
-}
-
 UNIT_TYPE = {
     "apartment": "APT",
     "basement": "BSM",
@@ -238,7 +168,6 @@ class Session:
         self.staging = staging
         self.language = language
 
-        self.county = COUNTY
         self.unit_type = UNIT_TYPE
         self.party = PARTY
         self.error = ERROR
@@ -328,7 +257,6 @@ class Session:
 
         self.suffix = {}
         self.state = {}
-        self.county = {}
         self.party = {}
         self.gender = {}
         self.race = {}
@@ -399,7 +327,6 @@ class Session:
             else:
                 pass
 
-        print("COUNTY = %s\n" % json.dumps(self.county, indent=4))
         print("UNIT_TYPE = %s\n" % json.dumps(self.unit_type, indent=4))
         print("PARTY = %s\n" % json.dumps(self.party, indent=4))
 
@@ -475,7 +402,7 @@ class Session:
             "date_of_birth": None,
             "address1": "streetaddress",
             "city": "city",
-            "county": None,
+            "county": "county",
             "zipcode": "zipcode",
             "party": None,  # multiple
         }
@@ -539,13 +466,6 @@ class Session:
                 continue
             if k == "date_of_birth":
                 vals["DateOfBirth"] = registration[k].strftime("%Y-%m-%d")
-            elif k == "county":
-                county = registration[k].lower()
-                if county not in self.county:
-                    raise InvalidRegistrationError(
-                        f"county {county} is not recognized by the API"
-                    )
-                vals["county"] = self.county[county]
             elif k == "party":
                 party = registration[k].lower()
                 if party in ["democrat"]:
