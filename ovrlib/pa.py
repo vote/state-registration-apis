@@ -412,10 +412,10 @@ class Session:
             "middle_name": "MiddleName",
             "suffix": None,
             "address2": "streetaddress2",
-            # "email": "email",
+            "email": "email",
+            "phone": "phone",
             # "gender": None,
             # "race": None,
-            # "phone": "phone",
             "unittype": None,
             "unitnumber": None,
             "dl_number": "drivers-license",
@@ -497,7 +497,7 @@ class Session:
         else:
             vals["ispartychange"] = "1"
 
-        if "dl_nubmer" not in registration:
+        if "dl_number" not in registration:
             vals["continueAppSubmit"] = "1"
         if "dl_number" not in registration and "ssn4" not in registration:
             vals["donthavebothDLandSSN"] = "1"
@@ -513,7 +513,7 @@ class Session:
                 )
             vals[
                 "signatureimage"
-            ] = f"data:image/{signature_type};base64,{base64.b64encode(signature)}"
+            ] = f"data:image/{signature_type};base64,{base64.b64encode(signature).decode('utf-8')}"
 
         root = etree.fromstring(XML_TEMPLATE)
         for record in root:
