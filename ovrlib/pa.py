@@ -6,6 +6,14 @@ import re
 import requests
 from lxml import etree
 
+from .exceptions import (
+    InvalidAccessKeyError,
+    InvalidDLError,
+    InvalidRegistrationError,
+    InvalidSignatureError,
+    ReadOnlyAccessKeyError,
+)
+
 STAGING_URL = "https://paovrwebapi.beta.votespa.com/SureOVRWebAPI/api/ovr"
 PROD_URL = "https://paovrwebapi.votespa.com/SureOVRWebAPI/api/ovr"
 
@@ -155,26 +163,6 @@ RE_BARE_NUMBER = re.compile(r"^#?(\d+)$")
 RE_BARE_UNIT_NUMBER = re.compile(r"^(\w+)\.? (\d+)$")
 RE_TRAILING_NUMBER = re.compile(r"^(.*) #(\d+)$")
 RE_TRAILING_UNIT_NUMBER = re.compile(r"^(.*) (\w+)\.? (\d+)$")
-
-
-class InvalidAccessKeyError(Exception):
-    pass
-
-
-class ReadOnlyAccessKeyError(Exception):
-    pass
-
-
-class InvalidRegistrationError(Exception):
-    pass
-
-
-class InvalidDLError(Exception):
-    pass
-
-
-class InvalidSignatureError(Exception):
-    pass
 
 
 class Session:
