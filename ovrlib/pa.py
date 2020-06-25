@@ -19,11 +19,8 @@ These parts of the API are optional and not current supported:
 
 - batch mode
 - optional fields, like
-  - gender
   - race
   - ethnicity
-  - phone
-  - email
   - need help to vote (+ preferred langauge)
   - is poll worker
 
@@ -69,6 +66,12 @@ PARTY = {
     "libertarian": "LN",
     "none (no affiliation)": "NF",
     "other": "OTH",
+}
+
+GENDER = {
+    "female": "F",
+    "male": "M",
+    "unknown": "U"
 }
 
 ERROR = {
@@ -168,10 +171,6 @@ class Session:
         self.staging = staging
         self.language = language
 
-        self.unit_type = UNIT_TYPE
-        self.party = PARTY
-        self.error = ERROR
-
     def get_url(self, action):
         if self.staging:
             url = STAGING_URL
@@ -221,10 +220,10 @@ class Session:
                     "VR_WAPI_Invalidsignaturecontrast",
                     "VR_WAPI_Invalidsignatureresolution",
                 ]:
-                    raise InvalidSignatureError(f"{i.text}: {self.error.get(i.text)}")
+                    raise InvalidSignatureError(f"{i.text}: {ERROR.get(i.text, '')}")
                 else:
                     raise InvalidRegistrationError(
-                        f"{i.text}: {self.error.get(i.text)}"
+                        f"{i.text}: {ERROR.get(i.text, '')}"
                     )
 
         return root
@@ -246,22 +245,24 @@ class Session:
                 target[k] = v
 
         root = self.do_request("GETERRORVALUES")
-        self.error = {}
+        error = {}
         for i in root:
             if i.tag == "MessageText":
-                map_subitem(i, "ErrorCode", "ErrorText", self.error)
-        print("ERRORS = %s\n" % json.dumps(self.error, indent=4))
+                map_subitem(i, "ErrorCode", "ErrorText", error)
+        print("ERRORS = %s\n" % json.dumps(error, indent=4))
 
         root = self.do_request("GETAPPLICATIONSETUP")
         assert root.tag == "NewDataSet"
 
-        self.suffix = {}
-        self.state = {}
-        self.party = {}
-        self.gender = {}
-        self.race = {}
-        self.unit_type = {}
-        self.assistance_type = {}
+        county = {}
+        suffix = {}
+        state = {}
+        party = {}
+        gender = {}
+        race = {}
+        unit_type = {}
+        assistance_type = {}
+
         self.other = {}
 
         def map_subitem_lower(node, keytag, valtag, target):
@@ -295,40 +296,41 @@ class Session:
         for i in root:
             if i.tag == "Suffix":
                 map_subitem_lower(
-                    i, "NameSuffixDescription", "NameSuffixCode", self.race
+                    i, "NameSuffixDescription", "NameSuffixCode", race
                 )
             elif i.tag == "Race":
-                map_subitem_lower(i, "RaceDescription", "RaceCode", self.race)
+                map_subitem_lower(i, "RaceDescription", "RaceCode", race)
             elif i.tag == "UnitTypes":
                 map_subitem_lower(
-                    i, "UnitTypesDescription", "UnitTypesCode", self.unit_type
+                    i, "UnitTypesDescription", "UnitTypesCode", unit_type
                 )
             elif i.tag == "AssistanceType":
                 map_subitem_lower(
                     i,
                     "AssistanceTypeDescription",
                     "AssistanceTypeCode",
-                    self.assistance_type,
+                    assistance_type,
                 )
             elif i.tag == "Gender":
-                map_subitem_lower(i, "GenderDescription", "GenderCode", self.gender)
+                map_subitem_lower(i, "GenderDescription", "GenderCode", gender)
             elif i.tag == "PoliticalParty":
                 map_subitem_lower(
-                    i, "PoliticalPartyDescription", "PoliticalPartyCode", self.party
+                    i, "PoliticalPartyDescription", "PoliticalPartyCode", party
                 )
             elif i.tag in other_map:
                 for j in i:
                     if j.tag == other_map[i.tag][0]:
                         self.other[other_map[i.tag][1]] = j.text
             elif i.tag == "County":
-                map_subitem_lower(i, "Countyname", "countyID", self.county)
+                map_subitem_lower(i, "Countyname", "countyID", county)
             elif i.tag == "States":
-                map_subitem_lower(i, "CodesDescription", "Code", self.state)
+                map_subitem_lower(i, "CodesDescription", "Code", state)
             else:
                 pass
 
-        print("UNIT_TYPE = %s\n" % json.dumps(self.unit_type, indent=4))
-        print("PARTY = %s\n" % json.dumps(self.party, indent=4))
+        print("UNIT_TYPE = %s\n" % json.dumps(unit_type, indent=4))
+        print("PARTY = %s\n" % json.dumps(party, indent=4))
+        print("GENDER = %s\n" % json.dumps(gender, indent=4))
 
     def normalize_address_unit(self, addr):
         """
@@ -351,12 +353,12 @@ class Session:
 
             m = re.compile(r"^(\w+)\.? (\d+)$").match(addr["address2"].strip())
             if m:
-                if m[1].lower() in self.unit_type:
+                if m[1].lower() in UNIT_TYPE:
                     del addr["address2"]
                     addr["unittype"] = self.unit_type[m[1].lower()]
                     addr["unitnumber"] = m[2]
                     return
-                if m[1].upper() in self.unit_type.values():
+                if m[1].upper() in UNIT_TYPE.values():
                     del addr["address2"]
                     addr["unittype"] = m[1].upper()
                     addr["unitnumber"] = m[2]
@@ -414,7 +416,7 @@ class Session:
             "address2": "streetaddress2",
             "email": "email",
             "phone": "phone",
-            # "gender": None,
+            "gender": None,
             # "race": None,
             "unittype": None,
             "unitnumber": None,
@@ -472,11 +474,18 @@ class Session:
                     party = "democratic"
                 elif party.startswith("none"):
                     party = "none (no affiliation)"
-                if party in self.party:
-                    vals["politicalparty"] = self.party[party]
+                if party in PARTY:
+                    vals["politicalparty"] = PARTY[party]
                 else:
-                    vals["politicalparty"] = self.party["other"]
+                    vals["politicalparty"] = PARTY["other"]
                     vals["otherpoliticalparty"] = party
+            elif k == "gender":
+                if registration[k] in GENDER:
+                    vals[v] = GENDER[registration[k]]
+                elif registration[k].upper() in GENDER.values():
+                    vals[v] = registration[k].upper()
+                else:
+                    raise InvalidRegistrationError(f"gender '{v}' not recognized; must be one of {GENDER}")
             elif k == "suffix":
                 # NOTE: the API enumerates specific suffixes; not sure what happens if we
                 # submit one that is not listed.
