@@ -444,7 +444,7 @@ class Session:
         }
 
         OPTIONAL = {
-            "federal_voter": None,
+            "federal_voter": "isfederalvoter",
             "middle_name": "MiddleName",
             "suffix": "TitleSuffix",  # The API enumerates valid suffixes, but seems to accept any value here.
             "address2": "streetaddress2",
@@ -521,8 +521,6 @@ class Session:
                     raise InvalidRegistrationError(
                         f"gender '{v}' not recognized; must be one of {GENDER}"
                     )
-            elif k == "federal_voter":
-                vals["isfederalvoter"] = "1" if v else "0"
             elif v:
                 if registration[k] in [True, False]:
                     if registration[k]:
