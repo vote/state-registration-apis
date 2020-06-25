@@ -205,7 +205,8 @@ class Session:
         else:
             response = requests.get(url)
 
-        logger.debug(f"{action} {response.status_code}")
+        logger.debug(f"{action} Status: {response.status_code}")
+        logger.debug(f"{action} Response: {response.text}")
 
         if response.status_code != 200:
             raise InvalidRegistrationError(f"HTTP status code {response.status_code}")
@@ -338,7 +339,7 @@ class Session:
                     i, "UnitTypesDescription", "UnitTypesCode", rval["unit_type"]
                 )
             elif i.tag == "AssistanceType":
-                map_subitem_lower(
+                map_subitem(
                     i,
                     "AssistanceTypeDescription",
                     "AssistanceTypeCode",
@@ -590,13 +591,17 @@ class Session:
         assert root.tag == "RESPONSE"
         application_id = None
         application_date = None
+        signature = None
         for i in root:
             if i.tag == "APPLICATIONID":
                 application_id = i.text
             elif i.tag == "APPLICATIONDATE":
-                application_id = i.text
+                application_date = i.text
+            elif i.tag == "SIGNATURE":
+                signature = i.text
 
         return {
             "application_id": application_id,
             "application_date": application_date,
+            "signature_source": signature,
         }

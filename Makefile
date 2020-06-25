@@ -6,9 +6,9 @@ lint:
 		--ignore-init-module-imports \
 		--in-place \
 		--recursive \
-		ovrlib/ && \
-		isort --recursive ovrlib/ && \
-		black ovrlib/
+		ovrlib/ *.py && \
+		isort --recursive ovrlib/ *.py && \
+		black ovrlib/ *.py
 
 
 test:
