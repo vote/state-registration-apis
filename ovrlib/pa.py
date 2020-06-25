@@ -389,7 +389,7 @@ class Session:
             if m:
                 if m[1].lower() in UNIT_TYPE:
                     del addr["address2"]
-                    addr["unittype"] = self.unit_type[m[1].lower()]
+                    addr["unittype"] = UNIT_TYPE[m[1].lower()]
                     addr["unitnumber"] = m[2]
                     return
                 if m[1].upper() in UNIT_TYPE.values():
@@ -410,12 +410,12 @@ class Session:
 
             m = RE_TRAILING_UNIT_NUMBER.match(addr["address1"].strip())
             if m:
-                if m[2].lower() in self.unit_type:
+                if m[2].lower() in UNIT_TYPE:
                     addr["address1"] = m[1]
-                    addr["unittype"] = self.unit_type[m[2].lower()]
+                    addr["unittype"] = UNIT_TYPE[m[2].lower()]
                     addr["unitnumber"] = m[3]
                     return
-                if m[2].upper() in self.unit_type.values():
+                if m[2].upper() in UNIT_TYPE.values():
                     addr["address1"] = m[1]
                     addr["unittype"] = m[2].upper()
                     addr["unitnumber"] = m[3]
