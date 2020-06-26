@@ -5,3 +5,4 @@ isort
 black
 pytest
 responses
+mypy

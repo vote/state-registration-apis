@@ -4,9 +4,10 @@ import json
 import logging
 import re
 from dataclasses import dataclass
+from typing import Dict, Optional
 
 import requests
-from lxml import etree
+from lxml import etree  # type: ignore
 
 from .exceptions import (
     InvalidAccessKeyError,
@@ -182,43 +183,43 @@ class PAOVRRequest:
     declaration: bool
     is_new: bool
 
-    signature: bytes = None
-    signature_types: str = None
+    signature: Optional[bytes] = None
+    signature_types: Optional[str] = None
 
-    middle_name: str = None
-    suffix: str = None
-    address2: str = None
-    email: str = None
-    phone: str = None
-    gender: str = None  # "male", "female", "unknown", "M", "F", "U"
-    federal_voter: bool = None
-    unittype: str = None
-    unitnumber: str = None
-    dl_number: int = None
-    ssn4: int = None
+    middle_name: Optional[str] = None
+    suffix: Optional[str] = None
+    address2: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    gender: Optional[str] = None  # "male", "female", "unknown", "M", "F", "U"
+    federal_voter: Optional[bool] = None
+    unit_type: Optional[str] = None
+    unit_number: Optional[str] = None
+    dl_number: Optional[int] = None
+    ssn4: Optional[int] = None
 
-    previous_first_name: str = None
-    previous_middle_name: str = None
-    previous_last_name: str = None
-    previous_address: str = None
-    previous_city: str = None
-    previous_state: str = None
-    previous_zipcode: str = None
-    previous_county: str = None
-    previous_year: str = None
+    previous_first_name: Optional[str] = None
+    previous_middle_name: Optional[str] = None
+    previous_last_name: Optional[str] = None
+    previous_address: Optional[str] = None
+    previous_city: Optional[str] = None
+    previous_state: Optional[str] = None
+    previous_zipcode: Optional[str] = None
+    previous_county: Optional[str] = None
+    previous_year: Optional[str] = None
 
-    mailing_address: str = None
-    mailing_city: str = None
-    mailing_state: str = None
-    mailing_zipcode: str = None
+    mailing_address: Optional[str] = None
+    mailing_city: Optional[str] = None
+    mailing_state: Optional[str] = None
+    mailing_zipcode: Optional[str] = None
 
-    mailin_ballot_request: bool = None
-    mailin_ballot_to_registration_address: bool = None
-    mailin_ballot_to_mailing_address: bool = None
-    mailin_ballot_address: str = None
-    mailin_ballot_city: str = None
-    mailin_ballot_state: str = None
-    mailin_ballot_zipcode: str = None
+    mailin_ballot_request: Optional[bool] = None
+    mailin_ballot_to_registration_address: Optional[bool] = None
+    mailin_ballot_to_mailing_address: Optional[bool] = None
+    mailin_ballot_address: Optional[str] = None
+    mailin_ballot_city: Optional[str] = None
+    mailin_ballot_state: Optional[str] = None
+    mailin_ballot_zipcode: Optional[str] = None
 
     def normalize_address_unit(self):
         """
@@ -227,29 +228,29 @@ class PAOVRRequest:
         a recognized unit is found in the address line(s), it will be moved into the
         dedicated unittype+unitnumber fields.
         """
-        if self.unittype or self.unitnumber:
+        if self.unit_type or self.unit_number:
             return
 
         # first try address2 field
         if self.address2 is not None:
             m = RE_BARE_NUMBER.match(self.address2.strip())
             if m:
-                self.unittype = "UNIT"
-                self.unitnumber = m[1]
+                self.unit_type = "UNIT"
+                self.unit_number = m[1]
                 self.address2 = None
                 return
 
             m = RE_BARE_UNIT_NUMBER.match(self.address2.strip())
             if m:
-                if m[1].lower() in PAOVRConstants.UNIT_TYPE:
+                if m[1].lower() in UNIT_TYPE:
                     self.address2 = None
-                    self.unittype = PAOVRConstants.UNIT_TYPE[m[1].lower()]
-                    self.unitnumber = m[2]
+                    self.unit_type = UNIT_TYPE[m[1].lower()]
+                    self.unit_number = m[2]
                     return
-                if m[1].upper() in PAOVRConstants.UNIT_TYPE.values():
+                if m[1].upper() in UNIT_TYPE.values():
                     self.address2 = None
-                    self.unittype = m[1].upper()
-                    self.unitnumber = m[2]
+                    self.unit_type = m[1].upper()
+                    self.unit_number = m[2]
                     return
 
         # then look for suffix on address1
@@ -257,21 +258,21 @@ class PAOVRRequest:
         m = RE_TRAILING_NUMBER.match(self.address1.strip())
         if m:
             self.address1 = m[1].strip()
-            self.unittype = "UNIT"
-            self.unitnumber = m[2]
+            self.unit_type = "UNIT"
+            self.unit_number = m[2]
             return
 
         m = RE_TRAILING_UNIT_NUMBER.match(self.address1.strip())
         if m:
-            if m[2].lower() in PAOVRConstants.UNIT_TYPE:
+            if m[2].lower() in UNIT_TYPE:
                 self.address1 = m[1]
-                self.unittype = UNIT_TYPE[m[2].lower()]
-                self.unitnumber = m[3]
+                self.unit_type = UNIT_TYPE[m[2].lower()]
+                self.unit_number = m[3]
                 return
-            if m[2].upper() in PAOVRConstants.UNIT_TYPE.values():
+            if m[2].upper() in UNIT_TYPE.values():
                 self.address1 = m[1]
-                self.unittype = m[2].upper()
-                self.unitnumber = m[3]
+                self.unit_type = m[2].upper()
+                self.unit_number = m[3]
                 return
 
     def to_request_body(self):
@@ -304,8 +305,8 @@ class PAOVRRequest:
             "phone": "phone",
             "gender": None,
             # "race": None,
-            "unittype": None,
-            "unitnumber": None,
+            "unit_type": None,
+            "unit_number": None,
             "dl_number": "drivers-license",
             "ssn4": "ssn4",
             # if change of name, address
@@ -412,7 +413,7 @@ class PAOVRRequest:
             for i in record:
                 k = i.tag.split("}")[1]  # strip of "{xmlns}" prefix
                 if k in vals:
-                    i.text = vals[k]
+                    i.text = str(vals[k])
         xml = etree.tostring(root).decode("utf-8")
         return json.dumps({"ApplicationData": xml})
 
@@ -446,12 +447,12 @@ class PAOVRResponse:
 
 
 class PAOVRSession:
-    def __init__(self, api_key, staging, language=0):
+    def __init__(self, api_key: str, staging: bool, language: int = 0):
         self.api_key = api_key
         self.staging = staging
         self.language = language
 
-    def get_url(self, action):
+    def get_url(self, action: str):
         if self.staging:
             url = STAGING_URL
         else:
@@ -459,7 +460,7 @@ class PAOVRSession:
         url += f"?JSONv2&sysparm_AuthKey={self.api_key}&sysparm_action={action}&sysparm_Language={self.language}"
         return url
 
-    def do_request_unparsed(self, action, data=None):
+    def do_request_unparsed(self, action: str, data=None):
         url = self.get_url(action)
         if data:
             response = requests.post(
@@ -481,7 +482,7 @@ class PAOVRSession:
 
         return response.text
 
-    def do_request(self, action, data=None):
+    def do_request(self, action: str, data=None):
         xml_str = json.loads(self.do_request_unparsed(action, data))
         root = etree.fromstring(xml_str)
 
@@ -496,7 +497,7 @@ class PAOVRSession:
                 if not i.text:
                     continue
                 if i.text == "VR_WAPI_InvalidAccessKey":
-                    raise InvalidAccessKeyError(f"{i.text}: {self.error.get(i.text)}")
+                    raise InvalidAccessKeyError(f"{i.text}: {ERROR.get(i.text)}")
                 elif i.text == "VR_WAPI_InvalidOVRDL":
                     raise InvalidDLError
                 elif i.text in [
@@ -548,7 +549,7 @@ class PAOVRSession:
             "other": {},
         }
 
-        def map_subitem(node, keytag, valtag, target):
+        def map_subitem(node, keytag: str, valtag: str, target: Dict[str, str]):
             k = None
             v = None
             for j in node:
@@ -567,7 +568,7 @@ class PAOVRSession:
         root = self.do_request("GETAPPLICATIONSETUP")
         assert root.tag == "NewDataSet"
 
-        def map_subitem_lower(node, keytag, valtag, target):
+        def map_subitem_lower(node, keytag: str, valtag: str, target: Dict[str, str]):
             k = None
             v = None
             for j in node:
@@ -634,7 +635,7 @@ class PAOVRSession:
 
         return rval
 
-    def register(self, registration):
+    def register(self, registration: PAOVRRequest):
         """
         Submit a voter registration
         """

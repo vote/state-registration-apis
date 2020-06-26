@@ -1,9 +1,9 @@
 import datetime
 
-import pytest
-import responses
+import pytest  # type: ignore
+import responses  # type: ignore
 
-from ..pa import STAGING_URL, Session
+from ..pa import STAGING_URL, PAOVRRequest, PAOVRSession
 
 
 @pytest.mark.parametrize(
@@ -11,35 +11,51 @@ from ..pa import STAGING_URL, Session
     [
         (
             {"address1": "123 A st #456"},
-            {"address1": "123 A st", "unittype": "UNIT", "unitnumber": "456"},
+            {"address1": "123 A st", "unit_type": "UNIT", "unit_number": "456"},
         ),
         (
             {"address1": "123 A st", "address2": "#456"},
-            {"address1": "123 A st", "unittype": "UNIT", "unitnumber": "456"},
+            {"address1": "123 A st", "unit_type": "UNIT", "unit_number": "456"},
         ),
         (
             {"address1": "123 A st #456"},
-            {"address1": "123 A st", "unittype": "UNIT", "unitnumber": "456"},
+            {"address1": "123 A st", "unit_type": "UNIT", "unit_number": "456"},
         ),
         (
             {"address1": "123 A st apt 456"},
-            {"address1": "123 A st", "unittype": "APT", "unitnumber": "456"},
+            {"address1": "123 A st", "unit_type": "APT", "unit_number": "456"},
         ),
         (
             {"address1": "123 A st apt. 456"},
-            {"address1": "123 A st", "unittype": "APT", "unitnumber": "456"},
+            {"address1": "123 A st", "unit_type": "APT", "unit_number": "456"},
         ),
         (
             {"address1": "123 A st", "address2": "apt. 456"},
-            {"address1": "123 A st", "unittype": "APT", "unitnumber": "456"},
+            {"address1": "123 A st", "unit_type": "APT", "unit_number": "456"},
         ),
     ],
 )
 def test_normalize_address_unit(inaddr, outaddr):
-    s = Session(api_key=None, staging=False)
-    t = inaddr.copy()
-    s.normalize_address_unit(t)
-    assert t == outaddr
+    r = PAOVRRequest(
+        first_name="",
+        last_name="",
+        date_of_birth=datetime.date(year=1, month=1, day=1),
+        address1=inaddr.get("address1"),
+        address2=inaddr.get("address2"),
+        city="",
+        county="",
+        zipcode="",
+        party="",
+        united_states_citizen=True,
+        eighteen_on_election_day=True,
+        declaration=True,
+        is_new=True,
+    )
+    r.normalize_address_unit()
+    assert r.address1 == outaddr.get("address1")
+    assert r.address2 == outaddr.get("address2")
+    assert r.unit_type == outaddr.get("unit_type")
+    assert r.unit_number == outaddr.get("unit_number")
 
 
 @responses.activate
@@ -67,7 +83,7 @@ def test_simple():
         status=200,
     )
 
-    s = Session(api_key="abc", staging=True)
+    s = PAOVRSession(api_key="abc", staging=True)
     r = s.fetch_constants()
 
     assert len(responses.calls) == 3
@@ -292,28 +308,28 @@ def test_simple():
     "reg,body",
     [
         (
-            {
-                "first_name": "Sally",
-                "last_name": "Penndot",
-                "suffix": "XIV",
-                "date_of_birth": datetime.datetime(1944, 5, 2, 0, 0),
-                "address1": "123 A St",
-                "city": "Clarion",
-                "zipcode": "16214",
-                "county": "Clarion",
-                "gender": "female",
-                "party": "Democrat",
-                "federal_voter": True,
-                "united_states_citizen": True,
-                "eighteen_on_election_day": True,
-                "declaration": True,
-                "dl_number": "99007069",
-            },
+            PAOVRRequest(
+                first_name="Sally",
+                last_name="Penndot",
+                suffix="XIV",
+                date_of_birth=datetime.date(1944, 5, 2),
+                address1="123 A St",
+                city="Clarion",
+                zipcode="16214",
+                county="Clarion",
+                gender="female",
+                party="Democrat",
+                federal_voter=True,
+                united_states_citizen=True,
+                eighteen_on_election_day=True,
+                declaration=True,
+                dl_number=99007069,
+                is_new=True,
+            ),
             '{"ApplicationData": "<APIOnlineApplicationData xmlns=\\"OVRexternaldata\\">  <record>    <batch>0</batch>    <FirstName>Sally</FirstName>    <MiddleName/>    <LastName>Penndot</LastName>    <TitleSuffix>XIV</TitleSuffix>    <united-states-citizen>1</united-states-citizen>    <eighteen-on-election-day>1</eighteen-on-election-day>    <isnewregistration>1</isnewregistration>    <name-update/>    <address-update/>    <ispartychange/>    <isfederalvoter>1</isfederalvoter>    <DateOfBirth>1944-05-02</DateOfBirth>    <Gender/>    <Ethnicity/>    <Phone/>    <Email/>    <streetaddress>123 A St</streetaddress>    <streetaddress2/>    <unittype/>    <unitnumber/>    <city>Clarion</city>    <zipcode>16214</zipcode>    <donthavePermtOrResAddress/>    <county>Clarion</county>    <municipality/>    <mailingaddress/>    <mailingcity/>    <mailingstate/>    <mailingzipcode/>    <drivers-license>99007069</drivers-license>    <ssn4/>    <signatureimage/>    <continueAppSubmit/>    <donthavebothDLandSSN/>    <politicalparty>D</politicalparty>    <otherpoliticalparty/>    <needhelptovote/>    <typeofassistance/>    <preferredlanguage/>    <voterregnumber/>    <previousreglastname/>    <previousregfirstname/>    <previousregmiddlename/>    <previousregaddress/>    <previousregcity/>    <previousregstate/>    <previousregzip/>    <previousregcounty/>    <previousregyear/>    <declaration1>1</declaration1>    <assistedpersonname/>    <assistedpersonAddress/>    <assistedpersonphone/>    <assistancedeclaration2/>    <ispollworker/>    <bilingualinterpreter/>    <pollworkerspeaklang/>    <secondEmail/>    <ismailin/>    <istransferpermanent/>    <mailinaddresstype/>    <mailinballotaddr/>    <mailincity/>    <mailinstate/>    <mailinzipcode/>    <mailinward/>    <mailinlivedsince/>    <mailindeclaration/>  </record></APIOnlineApplicationData>"}',
         ),
     ],
 )
 def test_register_prepare_body(reg, body):
-    s = Session(api_key=None, staging=False)
-    r = s.register_request_body(reg)
-    assert r == body
+    out = reg.to_request_body()
+    assert out == body

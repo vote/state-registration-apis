@@ -12,4 +12,5 @@ lint:
 
 
 test:
+	mypy .
 	python -m pytest .
