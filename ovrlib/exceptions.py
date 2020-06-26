@@ -1,18 +1,22 @@
-class InvalidAccessKeyError(Exception):
+class OVRLibException(Exception):
     pass
 
 
-class ReadOnlyAccessKeyError(Exception):
+class InvalidAccessKeyError(OVRLibException):
     pass
 
 
-class InvalidRegistrationError(Exception):
+class ReadOnlyAccessKeyError(OVRLibException):
     pass
 
 
-class InvalidDLError(Exception):
+class InvalidRegistrationError(OVRLibException):
     pass
 
 
-class InvalidSignatureError(Exception):
+class InvalidDLError(OVRLibException):
+    pass
+
+
+class InvalidSignatureError(OVRLibException):
     pass
