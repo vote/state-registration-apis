@@ -1,7 +1,9 @@
 import base64
+import datetime
 import json
 import logging
 import re
+from dataclasses import dataclass
 
 import requests
 from lxml import etree
@@ -34,6 +36,13 @@ These parts of the API are optional and not current supported:
 
 
 """
+
+# A few regexes for normalize_address_unit()
+RE_BARE_NUMBER = re.compile(r"^#?(\d+)$")
+RE_BARE_UNIT_NUMBER = re.compile(r"^(\w+)\.? (\d+)$")
+RE_TRAILING_NUMBER = re.compile(r"^(.*) #(\d+)$")
+RE_TRAILING_UNIT_NUMBER = re.compile(r"^(.*) (\w+)\.? (\d+)$")
+
 
 ## API constants
 #
@@ -158,14 +167,285 @@ XML_TEMPLATE = "<APIOnlineApplicationData xmlns='OVRexternaldata'>  <record>    
 ## end constants
 
 
-# A few regexes for normalize_address_unit()
-RE_BARE_NUMBER = re.compile(r"^#?(\d+)$")
-RE_BARE_UNIT_NUMBER = re.compile(r"^(\w+)\.? (\d+)$")
-RE_TRAILING_NUMBER = re.compile(r"^(.*) #(\d+)$")
-RE_TRAILING_UNIT_NUMBER = re.compile(r"^(.*) (\w+)\.? (\d+)$")
+@dataclass
+class PAOVRRequest:
+    first_name: str
+    last_name: str
+    date_of_birth: datetime.date
+    address1: str
+    city: str
+    county: str
+    zipcode: str
+    party: str
+    united_states_citizen: bool
+    eighteen_on_election_day: bool
+    declaration: bool
+    is_new: bool
+
+    signature: bytes = None
+    signature_types: str = None
+
+    middle_name: str = None
+    suffix: str = None
+    address2: str = None
+    email: str = None
+    phone: str = None
+    gender: str = None  # "male", "female", "unknown", "M", "F", "U"
+    federal_voter: bool = None
+    unittype: str = None
+    unitnumber: str = None
+    dl_number: int = None
+    ssn4: int = None
+
+    previous_first_name: str = None
+    previous_middle_name: str = None
+    previous_last_name: str = None
+    previous_address: str = None
+    previous_city: str = None
+    previous_state: str = None
+    previous_zipcode: str = None
+    previous_county: str = None
+    previous_year: str = None
+
+    mailing_address: str = None
+    mailing_city: str = None
+    mailing_state: str = None
+    mailing_zipcode: str = None
+
+    mailin_ballot_request: bool = None
+    mailin_ballot_to_registration_address: bool = None
+    mailin_ballot_to_mailing_address: bool = None
+    mailin_ballot_address: str = None
+    mailin_ballot_city: str = None
+    mailin_ballot_state: str = None
+    mailin_ballot_zipcode: str = None
+
+    def normalize_address_unit(self):
+        """
+        This takes a dict with one or more of [address1, address2,
+        unittype, unitnumber] fields.  If the unit type/number are omitted, and
+        a recognized unit is found in the address line(s), it will be moved into the
+        dedicated unittype+unitnumber fields.
+        """
+        if self.unittype or self.unitnumber:
+            return
+
+        # first try address2 field
+        if self.address2 is not None:
+            m = RE_BARE_NUMBER.match(self.address2.strip())
+            if m:
+                self.unittype = "UNIT"
+                self.unitnumber = m[1]
+                self.address2 = None
+                return
+
+            m = RE_BARE_UNIT_NUMBER.match(self.address2.strip())
+            if m:
+                if m[1].lower() in PAOVRConstants.UNIT_TYPE:
+                    self.address2 = None
+                    self.unittype = PAOVRConstants.UNIT_TYPE[m[1].lower()]
+                    self.unitnumber = m[2]
+                    return
+                if m[1].upper() in PAOVRConstants.UNIT_TYPE.values():
+                    self.address2 = None
+                    self.unittype = m[1].upper()
+                    self.unitnumber = m[2]
+                    return
+
+        # then look for suffix on address1
+        # try trailing portion of address1
+        m = RE_TRAILING_NUMBER.match(self.address1.strip())
+        if m:
+            self.address1 = m[1].strip()
+            self.unittype = "UNIT"
+            self.unitnumber = m[2]
+            return
+
+        m = RE_TRAILING_UNIT_NUMBER.match(self.address1.strip())
+        if m:
+            if m[2].lower() in PAOVRConstants.UNIT_TYPE:
+                self.address1 = m[1]
+                self.unittype = UNIT_TYPE[m[2].lower()]
+                self.unitnumber = m[3]
+                return
+            if m[2].upper() in PAOVRConstants.UNIT_TYPE.values():
+                self.address1 = m[1]
+                self.unittype = m[2].upper()
+                self.unitnumber = m[3]
+                return
+
+    def to_request_body(self):
+        """
+        Generate a valid registration request body
+        """
+        SIG_TYPES = ["tiff", "png", "jpg", "bmp"]
+
+        REQUIRED = {
+            "first_name": "FirstName",
+            "last_name": "LastName",
+            "date_of_birth": None,
+            "address1": "streetaddress",
+            "city": "city",
+            "county": "county",
+            "zipcode": "zipcode",
+            "party": None,  # multiple
+            "united_states_citizen": "united-states-citizen",
+            "eighteen_on_election_day": "eighteen-on-election-day",
+            "declaration": "declaration1",
+            "is_new": None,
+        }
+
+        OPTIONAL = {
+            "federal_voter": "isfederalvoter",
+            "middle_name": "MiddleName",
+            "suffix": "TitleSuffix",  # The API enumerates valid suffixes, but seems to accept any value here.
+            "address2": "streetaddress2",
+            "email": "email",
+            "phone": "phone",
+            "gender": None,
+            # "race": None,
+            "unittype": None,
+            "unitnumber": None,
+            "dl_number": "drivers-license",
+            "ssn4": "ssn4",
+            # if change of name, address
+            "previous_first_name": "previousregfirstname",
+            "previous_middle_name": "previousregmiddlename",
+            "previous_last_name": "previousreglastname",
+            "previous_address": "previousregaddress",
+            "previous_city": "previousregcity",
+            "previous_state": "previousregstate",
+            "previous_zipcode": "previousregzip",
+            "previous_county": "previousregcounty",
+            "previous_year": "previousregyear",
+            # mailing address
+            "mailing_address": "Mailingaddress",
+            "mailing_city": "mailingcity",
+            "mailing_state": "mailingstate",
+            "mailing_zipcode": "mailingzipcode",
+            # VBM
+            "mailin_ballot_request": "ismailin",
+            "mailin_ballot_to_registration_address": None,
+            "mailin_ballot_to_mailing_address": None,
+            "mailin_ballot_address": "mailinballotaddr",
+            "mailin_ballot_city": "mailincity",
+            "mailin_ballot_state": "mailincity",
+            "mailin_ballot_zipcode": "mailinzipcode",
+        }
+
+        self.normalize_address_unit()
+
+        vals = {
+            "batch": "0",
+        }
+        for k in REQUIRED.keys():
+            if not getattr(self, k):
+                raise InvalidRegistrationError(f"registration field '{k}' is required")
+
+        for k, f in list(REQUIRED.items()) + list(OPTIONAL.items()):
+            v = getattr(self, k)
+            if v is None:
+                continue
+            if k == "is_new":
+                continue
+            if k == "date_of_birth":
+                vals["DateOfBirth"] = v.strftime("%Y-%m-%d")
+            elif k == "party":
+                party = v.lower()
+                if party in ["democrat"]:
+                    party = "democratic"
+                elif party.startswith("none"):
+                    party = "none (no affiliation)"
+                if party in PARTY:
+                    vals["politicalparty"] = PARTY[party]
+                else:
+                    vals["politicalparty"] = PARTY["other"]
+                    vals["otherpoliticalparty"] = party
+            elif k == "gender":
+                if v in GENDER:
+                    vals[f] = GENDER[v]
+                elif v.upper() in GENDER.values():
+                    vals[f] = v.upper()
+                else:
+                    raise InvalidRegistrationError(
+                        f"gender '{v}' not recognized; must be one of {GENDER}"
+                    )
+            elif f:
+                if v == True:
+                    vals[f] = "1"
+                elif v == False:
+                    vals[f] = "0"
+                else:
+                    vals[f] = v
+            else:
+                raise RuntimeError(f"unhandled field {k}")
+
+        if self.is_new:
+            vals["isnewregistration"] = "1"
+        elif self.previous_first_name:
+            vals["name-update"] = "1"
+        elif self.previous_address:
+            vals["address-update"] = "1"
+        else:
+            vals["ispartychange"] = "1"
+
+        if not self.dl_number:
+            vals["continueAppSubmit"] = "1"
+        if not self.dl_number and not self.ssn4:
+            vals["donthavebothDLandSSN"] = "1"
+            if not self.signature:
+                raise InvalidRegistrationError(
+                    "signature image required if DL and SSN are both missing"
+                )
+
+        if self.signature:
+            if self.signature_type not in SIG_TYPES:
+                raise InvalidRegistrationError(
+                    f"signature_type must be one of {SIG_TYPES}"
+                )
+            vals[
+                "signatureimage"
+            ] = f"data:image/{signature_type};base64,{base64.b64encode(signature).decode('utf-8')}"
+
+        root = etree.fromstring(XML_TEMPLATE)
+        for record in root:
+            for i in record:
+                k = i.tag.split("}")[1]  # strip of "{xmlns}" prefix
+                if k in vals:
+                    i.text = vals[k]
+        xml = etree.tostring(root).decode("utf-8")
+        return json.dumps({"ApplicationData": xml})
 
 
-class Session:
+@dataclass
+class PAOVRResponse:
+    application_id: str
+    application_date: datetime.datetime
+    signature_source: str
+
+    @classmethod
+    def from_response_body(cls, root):
+        assert root.tag == "RESPONSE"
+        application_id = None
+        application_date = None
+        signature = None
+        for i in root:
+            if i.tag == "APPLICATIONID":
+                application_id = i.text
+            elif i.tag == "APPLICATIONDATE":
+                application_date = datetime.datetime.strptime(
+                    i.text, "%b %d %Y %I:%M%p"
+                )
+            elif i.tag == "SIGNATURE":
+                signature = i.text
+        return cls(
+            application_id=application_id,
+            application_date=application_date,
+            signature_source=signature,
+        )
+
+
+class PAOVRSession:
     def __init__(self, api_key, staging, language=0):
         self.api_key = api_key
         self.staging = staging
@@ -354,215 +634,11 @@ class Session:
 
         return rval
 
-    def normalize_address_unit(self, addr):
-        """
-        This takes a dict with one or more of [address1, address2,
-        unittype, unitnumber] fields.  If the unit type/number are omitted, and
-        a recognized unit is found in the address line(s), it will be moved into the
-        dedicated unittype+unitnumber fields.
-        """
-        if addr.get("unittype") or addr.get("unitnumber"):
-            return
-
-        # first try address2 field
-        if "address2" in addr:
-            m = RE_BARE_NUMBER.match(addr["address2"].strip())
-            if m:
-                addr["unittype"] = "UNIT"
-                addr["unitnumber"] = m[1]
-                del addr["address2"]
-                return
-
-            m = RE_BARE_UNIT_NUMBER.match(addr["address2"].strip())
-            if m:
-                if m[1].lower() in UNIT_TYPE:
-                    del addr["address2"]
-                    addr["unittype"] = UNIT_TYPE[m[1].lower()]
-                    addr["unitnumber"] = m[2]
-                    return
-                if m[1].upper() in UNIT_TYPE.values():
-                    del addr["address2"]
-                    addr["unittype"] = m[1].upper()
-                    addr["unitnumber"] = m[2]
-                    return
-
-        # then look for suffix on address1
-        if "address1" in addr:
-            # try trailing portion of address1
-            m = RE_TRAILING_NUMBER.match(addr["address1"].strip())
-            if m:
-                addr["address1"] = m[1].strip()
-                addr["unittype"] = "UNIT"
-                addr["unitnumber"] = m[2]
-                return
-
-            m = RE_TRAILING_UNIT_NUMBER.match(addr["address1"].strip())
-            if m:
-                if m[2].lower() in UNIT_TYPE:
-                    addr["address1"] = m[1]
-                    addr["unittype"] = UNIT_TYPE[m[2].lower()]
-                    addr["unitnumber"] = m[3]
-                    return
-                if m[2].upper() in UNIT_TYPE.values():
-                    addr["address1"] = m[1]
-                    addr["unittype"] = m[2].upper()
-                    addr["unitnumber"] = m[3]
-                    return
-
-    def register_request_body(
-        self, registration, signature=None, signature_type=None, is_new=True
-    ):
-        """
-        Generate a valid registration request body
-        """
-        SIG_TYPES = ["tiff", "png", "jpg", "bmp"]
-
-        REQUIRED = {
-            "first_name": "FirstName",
-            "last_name": "LastName",
-            "date_of_birth": None,
-            "address1": "streetaddress",
-            "city": "city",
-            "county": "county",
-            "zipcode": "zipcode",
-            "party": None,  # multiple
-            "united_states_citizen": "united-states-citizen",
-            "eighteen_on_election_day": "eighteen-on-election-day",
-            "declaration": "declaration1",
-        }
-
-        OPTIONAL = {
-            "federal_voter": "isfederalvoter",
-            "middle_name": "MiddleName",
-            "suffix": "TitleSuffix",  # The API enumerates valid suffixes, but seems to accept any value here.
-            "address2": "streetaddress2",
-            "email": "email",
-            "phone": "phone",
-            "gender": None,
-            # "race": None,
-            "unittype": None,
-            "unitnumber": None,
-            "dl_number": "drivers-license",
-            "ssn4": "ssn4",
-            # if change of name, address
-            "previous_first_name": "previousregfirstname",
-            "previous_middle_name": "previousregmiddlename",
-            "previous_last_name": "previousreglastname",
-            "previous_address": "previousregaddress",
-            "previous_city": "previousregcity",
-            "previous_state": "previousregstate",
-            "previous_zipcode": "previousregzip",
-            "previous_county": "previousregcounty",
-            "previous_year": "previousregyear",
-            # mailing address
-            "mailing_address": "Mailingaddress",
-            "mailing_city": "mailingcity",
-            "mailing_state": "mailingstate",
-            "mailing_zipcode": "mailingzipcode",
-            # VBM
-            "mailin_ballot_request": "ismailin",
-            "mailin_ballot_to_registration_address": None,
-            "mailin_ballot_to_mailing_address": None,
-            "mailin_ballot_address": "mailinballotaddr",
-            "mailin_ballot_city": "mailincity",
-            "mailin_ballot_state": "mailincity",
-            "mailin_ballot_zipcode": "mailinzipcode",
-        }
-
-        for k in registration.keys():
-            if k not in REQUIRED and k not in OPTIONAL:
-                raise InvalidRegistrationError(
-                    f"registration field '{k}' not recognized"
-                )
-
-        self.normalize_address_unit(registration)
-
-        vals = {
-            "batch": "0",
-        }
-        for k in REQUIRED.keys():
-            if k not in registration:
-                raise InvalidRegistrationError(f"registration field '{k}' is required")
-
-        for k, v in list(REQUIRED.items()) + list(OPTIONAL.items()):
-            if k not in registration:
-                continue
-            if k == "date_of_birth":
-                vals["DateOfBirth"] = registration[k].strftime("%Y-%m-%d")
-            elif k == "party":
-                party = registration[k].lower()
-                if party in ["democrat"]:
-                    party = "democratic"
-                elif party.startswith("none"):
-                    party = "none (no affiliation)"
-                if party in PARTY:
-                    vals["politicalparty"] = PARTY[party]
-                else:
-                    vals["politicalparty"] = PARTY["other"]
-                    vals["otherpoliticalparty"] = party
-            elif k == "gender":
-                if registration[k] in GENDER:
-                    vals[v] = GENDER[registration[k]]
-                elif registration[k].upper() in GENDER.values():
-                    vals[v] = registration[k].upper()
-                else:
-                    raise InvalidRegistrationError(
-                        f"gender '{v}' not recognized; must be one of {GENDER}"
-                    )
-            elif v:
-                if registration[k] in [True, False]:
-                    if registration[k]:
-                        vals[v] = "1"
-                    else:
-                        vals[v] = "0"
-                else:
-                    vals[v] = registration[k]
-            else:
-                raise RuntimeError(f"unhandled field {k}")
-
-        if is_new:
-            vals["isnewregistration"] = "1"
-        elif "previous_first_name" in registration:
-            vals["name-update"] = "1"
-        elif "previous_address" in registration:
-            vals["address-update"] = "1"
-        else:
-            vals["ispartychange"] = "1"
-
-        if "dl_number" not in registration:
-            vals["continueAppSubmit"] = "1"
-        if "dl_number" not in registration and "ssn4" not in registration:
-            vals["donthavebothDLandSSN"] = "1"
-            if not signature:
-                raise InvalidRegistrationError(
-                    "signature image required if DL and SSN are both missing"
-                )
-
-        if signature:
-            if signature_type not in SIG_TYPES:
-                raise InvalidRegistrationError(
-                    f"signature_type must be one of {SIG_TYPES}"
-                )
-            vals[
-                "signatureimage"
-            ] = f"data:image/{signature_type};base64,{base64.b64encode(signature).decode('utf-8')}"
-
-        root = etree.fromstring(XML_TEMPLATE)
-        for record in root:
-            for i in record:
-                k = i.tag.split("}")[1]  # strip of "{xmlns}" prefix
-                if k in vals:
-                    i.text = vals[k]
-        xml = etree.tostring(root).decode("utf-8")
-        return json.dumps({"ApplicationData": xml})
-
-    def register(self, registration, signature=None, signature_type=None, is_new=True):
+    def register(self, registration):
         """
         Submit a voter registration
         """
-        body = self.register_request_body(
-            registration, signature, signature_type, is_new
-        )
+        body = registration.to_request_body()
         try:
             root = self.do_request("SETAPPLICATION", data=body)
         except InvalidAccessKeyError:
@@ -574,20 +650,4 @@ class Session:
             )
         except Exception as e:
             raise e
-        assert root.tag == "RESPONSE"
-        application_id = None
-        application_date = None
-        signature = None
-        for i in root:
-            if i.tag == "APPLICATIONID":
-                application_id = i.text
-            elif i.tag == "APPLICATIONDATE":
-                application_date = i.text
-            elif i.tag == "SIGNATURE":
-                signature = i.text
-
-        return {
-            "application_id": application_id,
-            "application_date": application_date,
-            "signature_source": signature,
-        }
+        return PAOVRResponse.from_response_body(root)

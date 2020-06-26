@@ -32,7 +32,7 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-session = ovrlib.pa.Session(api_key=args.api_key, staging=True)
+session = ovrlib.pa.PAOVRSession(api_key=args.api_key, staging=True)
 
 if args.get_constants:
     r = session.fetch_constants()
@@ -51,27 +51,28 @@ if args.signature:
         sig = f.read()
         sig_type = args.signature.split(".")[-1]
 
-r = {
-    "first_name": "Sally",
-    "last_name": "Penndot",
-    "suffix": "XIV",
-    "date_of_birth": datetime.datetime(year=1944, month=5, day=2),
-    "address1": "123 A St",
-    "city": "Clarion",
-    "zipcode": "16214",
-    "county": "Clarion",
-    "gender": "female",
-    "party": "Democrat",
-    "federal_voter": True,
-    "united_states_citizen": True,
-    "eighteen_on_election_day": True,
-    "declaration": True,
-}
-
+r = ovrlib.pa.PAOVRRequest(
+    first_name="Sally",
+    last_name="Penndot",
+    suffix="XIV",
+    date_of_birth=datetime.date(year=1944, month=5, day=2),
+    address1="123 A St",
+    city="Clarion",
+    zipcode="16214",
+    county="Clarion",
+    gender="female",
+    party="Democrat",
+    federal_voter=True,
+    united_states_citizen=True,
+    eighteen_on_election_day=True,
+    declaration=True,
+    is_new=True,
+)
 if args.with_dl:
-    r["dl_number"] = "99007069"
+    r.dl_number = "99007069"
 if args.with_ssn:
-    r["ssn4"] = "1234"
+    r.ssn4 = "1234"
 
-response = session.register(r, signature=sig, signature_type=sig_type)
-print(json.dumps(response, indent=4))
+print(r.to_request_body())
+response = session.register(r)
+print(response)
