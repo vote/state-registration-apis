@@ -169,6 +169,17 @@ XML_TEMPLATE = "<APIOnlineApplicationData xmlns='OVRexternaldata'>  <record>    
 
 
 @dataclass
+class PAOVRElectionInfo:
+    next_election: datetime.date
+    next_vr_deadline: datetime.date
+    vr_declaration: str
+    vbm_election_name: str
+    vbm_request_deadline: datetime.datetime
+    vbm_request_declaration: str
+    vbm_receipt_deadline: datetime.datetime
+
+
+@dataclass
 class PAOVRRequest:
     first_name: str
     last_name: str
@@ -520,6 +531,48 @@ class PAOVRSession:
 
         return root
 
+    def get_election_info(self):
+        other_map = {
+            "NextElection": ("NextElection", "next_election"),
+            "NextVRDeadline": ("NextVRDeadline", "next_vr_deadline"),
+            "Text_OVRApplnDeclaration": ("Text", "vr_declaration"),
+            "Text_OVRMailInApplnDeclaration": ("Text", "vbm_request_declaration"),
+            "Text_OVRMailInApplnComplDate": (
+                "Text_OVRMailInApplnComplDate",
+                "vbm_request_date",
+            ),
+            "Text_OVRMailInBallotRecvdDate": (
+                "Text_OVRMailInBallotRecvdDate",
+                "vbm_receipt_date",
+            ),
+            "Text_OVRMailInElectionName": ("ElectionName", "vbm_election_name"),
+            "Text_OVRMailInApplnComplTime": ("Time", "vbm_request_time"),
+            "Text_OVRMailInBallotRecvdTime": ("RecvdTime", "vbm_receipt_time"),
+        }
+
+        r = {}
+        root = self.do_request("GETAPPLICATIONSETUP")
+        assert root.tag == "NewDataSet"
+        for i in root:
+            if i.tag in other_map:
+                for j in i:
+                    if j.tag == other_map[i.tag][0]:
+                        r[other_map[i.tag][1]] = j.text
+
+        return PAOVRElectionInfo(
+            next_election=r["next_election"],
+            next_vr_deadline=r["next_vr_deadline"],
+            vr_declaration=r["vr_declaration"],
+            vbm_election_name=r["vbm_election_name"],
+            vbm_request_deadline=datetime.datetime.strptime(
+                f"{r['vbm_request_date']} {r['vbm_request_time']}", "%m/%d/%Y %I:%M %p"
+            ),
+            vbm_receipt_deadline=datetime.datetime.strptime(
+                f"{r['vbm_receipt_date']} {r['vbm_receipt_time']}", "%m/%d/%Y %I:%M %p"
+            ),
+            vbm_request_declaration=r["vbm_request_declaration"],
+        )
+
     def print_constants(self):
         """
         Print code to update API constants
@@ -534,7 +587,7 @@ class PAOVRSession:
     def fetch_constants(self):
         """
         Make read-only queries to the PA OVR API to fetch various
-        constants, XML template, other election info
+        constants, XML template
         """
         rval = {
             "error": {},
@@ -546,7 +599,6 @@ class PAOVRSession:
             "race": {},
             "unit_type": {},
             "assistance_type": {},
-            "other": {},
         }
 
         def map_subitem(node, keytag: str, valtag: str, target: Dict[str, str]):
@@ -579,23 +631,6 @@ class PAOVRSession:
             if k is not None and v is not None:
                 target[k.lower()] = v
 
-        other_map = {
-            "NextElection": ("NextElection", "next_election"),
-            "NextVRDeadline": ("NextVRDeadline", "next_ovr_deadline"),
-            "Text_OVRMailInApplnDeclaration": ("Text", "vbm_request_declaration"),
-            "Text_OVRMailInApplnComplDate": (
-                "Text_OVRMailInApplnComplDate",
-                "vbm_postmark_date",
-            ),
-            "Text_OVRMailInBallotRecvdDate": (
-                "Text_OVRMailInBallotRecvdDate",
-                "vfm_receive_date",
-            ),
-            "Text_OVRMailInElectionName": ("ElectionName", "vbm_election_name"),
-            "Text_OVRMailInApplnComplTime": ("Time", "vbm_postmark_time"),
-            "Text_OVRMailInBallotRecvdTime": ("RecvdTime", "vbm_receive_time"),
-        }
-
         for i in root:
             if i.tag == "Suffix":
                 map_subitem_lower(
@@ -620,10 +655,6 @@ class PAOVRSession:
                 map_subitem_lower(
                     i, "PoliticalPartyDescription", "PoliticalPartyCode", rval["party"]
                 )
-            elif i.tag in other_map:
-                for j in i:
-                    if j.tag == other_map[i.tag][0]:
-                        rval["other"][other_map[i.tag][1]] = j.text
             elif i.tag == "County":
                 map_subitem_lower(i, "Countyname", "countyID", rval["county"])
             elif i.tag == "States":

@@ -19,6 +19,12 @@ parser.add_argument(
 )
 parser.add_argument("--signature", help="signature file", required=False)
 parser.add_argument(
+    "--election-info",
+    help="fetch upcoming election info",
+    action="store_true",
+    required=False,
+)
+parser.add_argument(
     "--get-constants",
     help="print all constants fetched from API",
     action="store_true",
@@ -41,6 +47,10 @@ if args.get_constants:
 
 if args.print_constants_code:
     session.print_constants()
+    sys.exit()
+
+if args.election_info:
+    print(session.get_election_info())
     sys.exit()
 
 # test registration

@@ -3,7 +3,7 @@ import datetime
 import pytest  # type: ignore
 import responses  # type: ignore
 
-from ..pa import STAGING_URL, PAOVRRequest, PAOVRSession
+from ..pa import STAGING_URL, PAOVRElectionInfo, PAOVRRequest, PAOVRSession
 
 
 @pytest.mark.parametrize(
@@ -290,18 +290,19 @@ def test_simple():
             "I need help reading": "IL",
             "I do not speak English well": "LN",
         },
-        "other": {
-            "next_ovr_deadline": "10/19/2020",
-            "next_election": "11/03/2020",
-            "vbm_request_declaration": "<p>I declare that I am eligible to vote by mail-in ballot at the forthcoming primary or election; that I am requesting the ballot of the party with which I am enrolled according to my voter registration record and that all of the information which I have listed on this mail-in ballot application is true and correct.</p><p><strong>WARNING:</strong>If your mail-in ballot is received by the deadline, you will not be allowed to vote at your polling place.</p><p>By checking the box below, you are signing the application electronically. In doing so:</p><ul><li>You agree you have read and accept the terms of the declaration above.</li><li>You understand that your electronic signature on this application will constitute a legal signature.</li><li>You agree to submit this mail-in ballot application electronically and that all laws of the Commonwealth of Pennsylvania will apply to this transaction.</li></ul><p>By providing your PA Driver's License or PennDOT ID number, you understand that the signature from that PennDOT record will count as your signature on your mail-in ballot application.</p>",
-            "vbm_postmark_date": "10/27/2020",
-            "vfm_receive_date": "11/03/2020",
-            "vbm_election_name": "2020 GENERAL ELECTION",
-            "vbm_postmark_time": "5:00 PM",
-            "vbm_receive_time": "8:00 PM",
-        },
         "xml_template": "<APIOnlineApplicationData xmlns='OVRexternaldata'>  <record>    <batch></batch>    <FirstName></FirstName>    <MiddleName></MiddleName>    <LastName></LastName>    <TitleSuffix></TitleSuffix>    <united-states-citizen></united-states-citizen>    <eighteen-on-election-day></eighteen-on-election-day>    <isnewregistration></isnewregistration>    <name-update></name-update>    <address-update></address-update>    <ispartychange></ispartychange>    <isfederalvoter></isfederalvoter>    <DateOfBirth></DateOfBirth>    <Gender></Gender>    <Ethnicity></Ethnicity>    <Phone></Phone>    <Email></Email>    <streetaddress></streetaddress>    <streetaddress2></streetaddress2>    <unittype></unittype>    <unitnumber></unitnumber>    <city></city>    <zipcode></zipcode>    <donthavePermtOrResAddress></donthavePermtOrResAddress>    <county></county>    <municipality></municipality>    <mailingaddress></mailingaddress>    <mailingcity></mailingcity>    <mailingstate></mailingstate>    <mailingzipcode></mailingzipcode>    <drivers-license></drivers-license>    <ssn4></ssn4>    <signatureimage></signatureimage>    <continueAppSubmit></continueAppSubmit>    <donthavebothDLandSSN></donthavebothDLandSSN>    <politicalparty></politicalparty>    <otherpoliticalparty></otherpoliticalparty>    <needhelptovote></needhelptovote>    <typeofassistance></typeofassistance>    <preferredlanguage></preferredlanguage>    <voterregnumber></voterregnumber>    <previousreglastname></previousreglastname>    <previousregfirstname></previousregfirstname>    <previousregmiddlename></previousregmiddlename>    <previousregaddress></previousregaddress>    <previousregcity></previousregcity>    <previousregstate></previousregstate>    <previousregzip></previousregzip>    <previousregcounty></previousregcounty>    <previousregyear></previousregyear>    <declaration1></declaration1>    <assistedpersonname></assistedpersonname>    <assistedpersonAddress></assistedpersonAddress>    <assistedpersonphone></assistedpersonphone>    <assistancedeclaration2></assistancedeclaration2>    <ispollworker></ispollworker>    <bilingualinterpreter></bilingualinterpreter>    <pollworkerspeaklang></pollworkerspeaklang>    <secondEmail></secondEmail>    <ismailin></ismailin>    <istransferpermanent></istransferpermanent>    <mailinaddresstype></mailinaddresstype>    <mailinballotaddr></mailinballotaddr>    <mailincity></mailincity>    <mailinstate></mailinstate>    <mailinzipcode></mailinzipcode>    <mailinward></mailinward>    <mailinlivedsince></mailinlivedsince>    <mailindeclaration></mailindeclaration>  </record></APIOnlineApplicationData>",
     }
+
+    r = s.get_election_info()
+    assert r == PAOVRElectionInfo(
+        next_election="11/03/2020",
+        next_vr_deadline="10/19/2020",
+        vr_declaration="<p><strong>I declare that</strong></p><ul><li>I am a United States citizen and will have been a citizen for at least 1 month on the day of the next election.</li><li>I will be at least 18 years old on the day of the next election.</li><li>I will have lived at the address in section 5 for at least 30 days before the election.</li><li>I am legally qualified to vote.</li></ul><p>I affirm that this information is true. I understand that this declaration is the same as an affidavit, and, if this information is not true, I can be convicted of perjury, and fined up to $15,000, jailed for up to 7 years, or both.</p><p>By checking the box below, you are signing the application electronically. In doing so:</p><ul><li>You agree you have read and accept the terms of the declaration above.</li><li>You understand that your electronic signature on this application will constitute the legal equivalent of your signature for this voter registration application.</li><li>You agree to conduct this voter registration transaction by electronic means and that all laws of the Commonwealth of Pennsylvania will apply to this transaction.</li></ul>\t<p>If you provided your PA driver's license or PennDOT ID number, you understand that the signature from the PennDOT record will constitute your signature on your voter registration record. If you upload an image of your signature, you understand that the signature you upload will constitute your signature on your voter registration record. You understand that you do not have to register electronically, and may use a paper or other non-electronic form of this voter registration application.</p>",
+        vbm_election_name="2020 GENERAL ELECTION",
+        vbm_request_deadline=datetime.datetime(2020, 10, 27, 17, 0),
+        vbm_request_declaration="<p>I declare that I am eligible to vote by mail-in ballot at the forthcoming primary or election; that I am requesting the ballot of the party with which I am enrolled according to my voter registration record and that all of the information which I have listed on this mail-in ballot application is true and correct.</p><p><strong>WARNING:</strong>If your mail-in ballot is received by the deadline, you will not be allowed to vote at your polling place.</p><p>By checking the box below, you are signing the application electronically. In doing so:</p><ul><li>You agree you have read and accept the terms of the declaration above.</li><li>You understand that your electronic signature on this application will constitute a legal signature.</li><li>You agree to submit this mail-in ballot application electronically and that all laws of the Commonwealth of Pennsylvania will apply to this transaction.</li></ul><p>By providing your PA Driver's License or PennDOT ID number, you understand that the signature from that PennDOT record will count as your signature on your mail-in ballot application.</p>",
+        vbm_receipt_deadline=datetime.datetime(2020, 11, 3, 20, 0),
+    )
 
 
 @pytest.mark.parametrize(
