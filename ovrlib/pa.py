@@ -195,7 +195,7 @@ class PAOVRRequest:
     is_new: bool
 
     signature: Optional[bytes] = None
-    signature_types: Optional[str] = None
+    signature_type: Optional[str] = None
 
     middle_name: Optional[str] = None
     suffix: Optional[str] = None
@@ -206,8 +206,8 @@ class PAOVRRequest:
     federal_voter: Optional[bool] = None
     unit_type: Optional[str] = None
     unit_number: Optional[str] = None
-    dl_number: Optional[int] = None
-    ssn4: Optional[int] = None
+    dl_number: Optional[str] = None
+    ssn4: Optional[str] = None
 
     previous_first_name: Optional[str] = None
     previous_middle_name: Optional[str] = None
@@ -232,7 +232,7 @@ class PAOVRRequest:
     mailin_ballot_state: Optional[str] = None
     mailin_ballot_zipcode: Optional[str] = None
 
-    def normalize_address_unit(self):
+    def normalize_address_unit(self) -> None:
         """
         This takes a dict with one or more of [address1, address2,
         unittype, unitnumber] fields.  If the unit type/number are omitted, and
@@ -286,7 +286,7 @@ class PAOVRRequest:
                 self.unit_number = m[3]
                 return
 
-    def to_request_body(self):
+    def to_request_body(self) -> str:
         """
         Generate a valid registration request body
         """
@@ -347,7 +347,7 @@ class PAOVRRequest:
 
         self.normalize_address_unit()
 
-        vals = {
+        vals: Dict[str,str] = {
             "batch": "0",
         }
         for k in REQUIRED.keys():
@@ -375,9 +375,9 @@ class PAOVRRequest:
                     vals["otherpoliticalparty"] = party
             elif k == "gender":
                 if v in GENDER:
-                    vals[f] = GENDER[v]
+                    vals["gender"] = GENDER[v]
                 elif v.upper() in GENDER.values():
-                    vals[f] = v.upper()
+                    vals["gender"] = v.upper()
                 else:
                     raise InvalidRegistrationError(
                         f"gender '{v}' not recognized; must be one of {GENDER}"
@@ -417,7 +417,7 @@ class PAOVRRequest:
                 )
             vals[
                 "signatureimage"
-            ] = f"data:image/{signature_type};base64,{base64.b64encode(signature).decode('utf-8')}"
+            ] = f"data:image/{self.signature_type};base64,{base64.b64encode(self.signature).decode('utf-8')}"
 
         root = etree.fromstring(XML_TEMPLATE)
         for record in root:
@@ -431,9 +431,9 @@ class PAOVRRequest:
 
 @dataclass
 class PAOVRResponse:
-    application_id: str
-    application_date: datetime.datetime
-    signature_source: str
+    application_id: Optional[str]
+    application_date: Optional[datetime.datetime]
+    signature_source: Optional[str]
 
     @classmethod
     def from_response_body(cls, root):
@@ -463,7 +463,7 @@ class PAOVRSession:
         self.staging = staging
         self.language = language
 
-    def get_url(self, action: str):
+    def get_url(self, action: str) -> str:
         if self.staging:
             url = STAGING_URL
         else:
@@ -471,7 +471,7 @@ class PAOVRSession:
         url += f"?JSONv2&sysparm_AuthKey={self.api_key}&sysparm_action={action}&sysparm_Language={self.language}"
         return url
 
-    def do_request_unparsed(self, action: str, data=None):
+    def do_request_unparsed(self, action: str, data=None) -> str:
         url = self.get_url(action)
         if data:
             response = requests.post(
@@ -493,7 +493,7 @@ class PAOVRSession:
 
         return response.text
 
-    def do_request(self, action: str, data=None):
+    def do_request(self, action: str, data=None) -> etree.Element:
         xml_str = json.loads(self.do_request_unparsed(action, data))
         root = etree.fromstring(xml_str)
 
@@ -531,7 +531,7 @@ class PAOVRSession:
 
         return root
 
-    def get_election_info(self):
+    def get_election_info(self) -> PAOVRElectionInfo:
         other_map = {
             "NextElection": ("NextElection", "next_election"),
             "NextVRDeadline": ("NextVRDeadline", "next_vr_deadline"),
@@ -573,7 +573,7 @@ class PAOVRSession:
             vbm_request_declaration=r["vbm_request_declaration"],
         )
 
-    def print_constants(self):
+    def print_constants(self) -> None:
         """
         Print code to update API constants
         """
@@ -584,12 +584,12 @@ class PAOVRSession:
         print("GENDER = %s\n" % json.dumps(r["gender"], indent=4))
         print("XML_TEMPLATE = %s\n" % json.dumps(r["xml_template"]))
 
-    def fetch_constants(self):
+    def fetch_constants(self) -> Dict[str,Dict[str,str]]:
         """
         Make read-only queries to the PA OVR API to fetch various
         constants, XML template
         """
-        rval = {
+        rval: Dict[str,Dict[str,str]] = {
             "error": {},
             "county": {},
             "suffix": {},
@@ -666,7 +666,7 @@ class PAOVRSession:
 
         return rval
 
-    def register(self, registration: PAOVRRequest):
+    def register(self, registration: PAOVRRequest) -> PAOVRResponse:
         """
         Submit a voter registration
         """

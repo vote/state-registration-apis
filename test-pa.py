@@ -61,7 +61,7 @@ if args.signature:
         sig = f.read()
         sig_type = args.signature.split(".")[-1]
 
-r = ovrlib.pa.PAOVRRequest(
+req = ovrlib.pa.PAOVRRequest(
     first_name="Sally",
     last_name="Penndot",
     suffix="XIV",
@@ -79,10 +79,10 @@ r = ovrlib.pa.PAOVRRequest(
     is_new=True,
 )
 if args.with_dl:
-    r.dl_number = "99007069"
+    req.dl_number = "99007069"
 if args.with_ssn:
-    r.ssn4 = "1234"
+    req.ssn4 = "1234"
 
-print(r.to_request_body())
-response = session.register(r)
+print(req.to_request_body())
+response = session.register(req)
 print(response)
