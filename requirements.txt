@@ -1,8 +1,16 @@
+# ovrlib
 requests
 lxml
+setuptools
+dataclasses
+
+# code maint
 autoflake
 isort
 black
+twine
+
+# tests
 pytest
 responses
 mypy

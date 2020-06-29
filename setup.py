@@ -25,7 +25,7 @@ setup(
     description=about["__description__"],
     long_description=textwrap.dedent(open("README.md", "r").read()),
     long_description_content_type="text/markdown",
-    install_requires=["requests>=2.22.0", "lxml",],
+    install_requires=["requests>=2.22.0", "lxml", "dataclasses"],
     tests_require=["pytest", "responses",],
     test_suite="nose.collector",
     keywords=about["__keywords__"],
