@@ -347,7 +347,7 @@ class PAOVRRequest:
 
         self.normalize_address_unit()
 
-        vals: Dict[str,str] = {
+        vals: Dict[str, str] = {
             "batch": "0",
         }
         for k in REQUIRED.keys():
@@ -584,12 +584,12 @@ class PAOVRSession:
         print("GENDER = %s\n" % json.dumps(r["gender"], indent=4))
         print("XML_TEMPLATE = %s\n" % json.dumps(r["xml_template"]))
 
-    def fetch_constants(self) -> Dict[str,Dict[str,str]]:
+    def fetch_constants(self) -> Dict[str, Dict[str, str]]:
         """
         Make read-only queries to the PA OVR API to fetch various
         constants, XML template
         """
-        rval: Dict[str,Dict[str,str]] = {
+        rval: Dict[str, Dict[str, str]] = {
             "error": {},
             "county": {},
             "suffix": {},
