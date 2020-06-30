@@ -1,7 +1,8 @@
 # State Registration APIs
 
-VoteAmerica's documentation on how to work with states' online voter
+- VoteAmerica's documentation on how to work with states' online voter
 registration system.
+- ovrlib, a python library to interact with state APIs
 
 ## Background
 
@@ -51,7 +52,7 @@ includes:
 - A listing of which states have systems you can integrate with
 - Details instructions on how to get access to these systems -- who to call or
   email, what approvals you'll need, and how long it typically takes.
-- Clean, readable Python libraries for interactive with the Full Registration
+- ovrlib, a clean, readable Python library for interacting with the Full Registration
   APIs and the prefilling token APIs that you can use as-is, or read the source
   code of to understand how the systems work. For many of these systems, there
   are not official reference implementations so we are trying to provide good
@@ -85,3 +86,33 @@ information.
 | Pennsylvania | Full Registration API | [Docs](PA/README.md)  |
 | Virginia | Full Registration API | TODO |
 | Washington | Prefilling Links via URL parameters | TODO |
+
+## ovrlib
+
+# Synopsis
+
+```python
+import ovrlib
+
+session = ovrlib.pa.PAOVRSession(api_key=..., staging=True)
+request = ovrlib.pa.PAOVRRequest(
+    first_name="Sally",
+    last_name="Penndot",
+    suffix="XIV",
+    date_of_birth=datetime.date(year=1944, month=5, day=2),
+    address1="123 A St",
+    city="Clarion",
+    zipcode="16214",
+    county="Clarion",
+    gender="female",
+    party="Democrat",
+    federal_voter=True,
+    united_states_citizen=True,
+    eighteen_on_election_day=True,
+    declaration=True,
+    is_new=True,
+    dl_number="99007069",
+)
+response = session.register(req)
+```
+
