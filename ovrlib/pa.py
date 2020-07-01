@@ -290,7 +290,7 @@ class PAOVRRequest:
         """
         Generate a valid registration request body
         """
-        SIG_TYPES = ["tiff", "png", "jpg", "bmp"]
+        SIG_TYPES = ["tiff", "png", "jpg", "bmp", "jpeg"]
 
         REQUIRED = {
             "first_name": "FirstName",
@@ -415,9 +415,12 @@ class PAOVRRequest:
                 raise InvalidRegistrationError(
                     f"signature_type must be one of {SIG_TYPES}"
                 )
+            sig_type = self.signature_type
+            if sig_type == "jpeg":
+                sig_type = "jpg"
             vals[
                 "signatureimage"
-            ] = f"data:image/{self.signature_type};base64,{base64.b64encode(self.signature).decode('utf-8')}"
+            ] = f"data:image/{sig_type};base64,{base64.b64encode(self.signature).decode('utf-8')}"
 
         root = etree.fromstring(XML_TEMPLATE)
         for record in root:
