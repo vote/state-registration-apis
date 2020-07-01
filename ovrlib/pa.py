@@ -21,7 +21,7 @@ STAGING_URL = "https://paovrwebapi.beta.votespa.com/SureOVRWebAPI/api/ovr"
 PROD_URL = "https://paovrwebapi.votespa.com/SureOVRWebAPI/api/ovr"
 
 
-logger = logging.getLogger("pa_ovr")
+logger = logging.getLogger("ovrlib.pa")
 
 
 """
@@ -192,7 +192,7 @@ class PAOVRRequest:
     united_states_citizen: bool
     eighteen_on_election_day: bool
     declaration: bool
-    is_new: bool
+    is_new: Optional[bool] = None
 
     signature: Optional[bytes] = None
     signature_type: Optional[str] = None
@@ -290,7 +290,7 @@ class PAOVRRequest:
         """
         Generate a valid registration request body
         """
-        SIG_TYPES = ["tiff", "png", "jpg", "bmp"]
+        SIG_TYPES = ["tiff", "png", "jpg", "bmp", "jpeg"]
 
         REQUIRED = {
             "first_name": "FirstName",
@@ -304,10 +304,10 @@ class PAOVRRequest:
             "united_states_citizen": "united-states-citizen",
             "eighteen_on_election_day": "eighteen-on-election-day",
             "declaration": "declaration1",
-            "is_new": None,
         }
 
         OPTIONAL = {
+            "is_new": None,
             "federal_voter": "isfederalvoter",
             "middle_name": "MiddleName",
             "suffix": "TitleSuffix",  # The API enumerates valid suffixes, but seems to accept any value here.
@@ -392,14 +392,18 @@ class PAOVRRequest:
             else:
                 raise RuntimeError(f"unhandled field {k}")
 
-        if self.is_new:
+        if self.is_new == True:
             vals["isnewregistration"] = "1"
         elif self.previous_first_name:
             vals["name-update"] = "1"
         elif self.previous_address:
             vals["address-update"] = "1"
-        else:
+        elif self.is_new == False:
             vals["ispartychange"] = "1"
+        else:
+            # if we can't infer anything, assume that this is a new
+            # registration.
+            vals["isnewregistration"] = "1"
 
         if not self.dl_number:
             vals["continueAppSubmit"] = "1"
@@ -415,9 +419,12 @@ class PAOVRRequest:
                 raise InvalidRegistrationError(
                     f"signature_type must be one of {SIG_TYPES}"
                 )
+            sig_type = self.signature_type
+            if sig_type == "jpeg":
+                sig_type = "jpg"
             vals[
                 "signatureimage"
-            ] = f"data:image/{self.signature_type};base64,{base64.b64encode(self.signature).decode('utf-8')}"
+            ] = f"data:image/{sig_type};base64,{base64.b64encode(self.signature).decode('utf-8')}"
 
         root = etree.fromstring(XML_TEMPLATE)
         for record in root:
