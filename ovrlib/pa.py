@@ -21,7 +21,7 @@ STAGING_URL = "https://paovrwebapi.beta.votespa.com/SureOVRWebAPI/api/ovr"
 PROD_URL = "https://paovrwebapi.votespa.com/SureOVRWebAPI/api/ovr"
 
 
-logger = logging.getLogger("pa_ovr")
+logger = logging.getLogger("ovrlib.pa")
 
 
 """
