@@ -1,7 +1,10 @@
 # State Registration APIs
 
+This repo contains:
+
 - VoteAmerica's documentation on how to work with states' online voter
 registration system.
+
 - ovrlib, a python library to interact with state APIs
 
 ## Background
@@ -85,7 +88,7 @@ information.
 | Nevada | Tracking Links | TODO |
 | Pennsylvania | Full Registration API | [Docs](PA/README.md)  |
 | Virginia | Full Registration API | TODO |
-| Washington | Prefilling Links via URL parameters | TODO |
+| Washington | Tracking links (aggregate API) via URL parameter | TODO |
 
 ## ovrlib
 
