@@ -80,7 +80,7 @@ This table lists all the states with any sort of API or integration. You can
 find a separate markdown file in this repository for each state with more
 information.
 
-| State | Integration Type | Documentation |
+| State | Integration Type | Process Documentation |
 | --- | --- | --- |
 | California | Prefilling Links via API call and token | TODO |
 | Colorado | Tracking Links (full voter file data) via URL Parameter | [Docs](CO/README.md) |
@@ -88,7 +88,7 @@ information.
 | Nevada | Tracking Links | TODO |
 | Pennsylvania | Full Registration API | [Docs](PA/README.md)  |
 | Virginia | Full Registration API | TODO |
-| Washington | Tracking links (aggregate API) via URL parameter | TODO |
+| Washington | Tracking links (aggregate API) via URL parameter | [Docs](WA/README.md) |
 
 ## ovrlib
 
