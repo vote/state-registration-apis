@@ -76,6 +76,8 @@ req = ovrlib.pa.PAOVRRequest(
     united_states_citizen=True,
     eighteen_on_election_day=True,
     declaration=True,
+    signature=sig,
+    signature_type=sig_type,
 )
 if args.with_dl:
     req.dl_number = "99007069"
