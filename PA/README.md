@@ -14,8 +14,11 @@ fully via the API without ever sending users to the state OVR website.
 5. Wait for the elections office to email you with an approval. You'll get a read-only staging API key. They'll probably want to know your implementation timeline.
 6. You'll probably want to get your API key upgrading to a read-write staging API key (by default, they only give you a read-only staging API key). To do this, just email the elections office back and ask for read-write staging access.
 7. Implement your website or application, using the staging API key.
-8. Reply to the elections office to arrange for testing.
-9. After you've completed testing, you'll be given a production API key and can go live.
+8. Reply to the elections office to arrange for testing. There are four steps in the testing process:
+  1. Your point-of-contact at the elections office will do a preliminary review of your application.
+  2. The full team at the elections office will do a final review of your application.
+  3. You'll be assigned a testing week. During this week, the elections office will send you a spreadsheet with 50-100 test cases that you'll need to submit through your application. The elections office will verify that the data is submitted correctly to the state by your applicaton.
+  4. You'll be assigned a go-live date. This will be a one-hour Skype call with your team and the elections office. During this go-live session, you'll be given your production API key, you'll switch over to using that production API key, and then you'll submit three test registrations to the production API to make sure the whole system is working end-to-end.
 
 ## Additional Documentation
 

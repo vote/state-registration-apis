@@ -92,7 +92,11 @@ information.
 
 ## ovrlib
 
-# Synopsis
+`ovrlib` is a python library for interacting with state's OVR APIs.
+Currently, it only supports Pennsylvania. The source code is in [this repository](ovrlib/),
+and the package is published on [PyPi](https://pypi.org/project/ovrlib/)
+
+### Synopsis
 
 ```python
 import ovrlib
