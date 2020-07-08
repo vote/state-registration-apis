@@ -82,7 +82,7 @@ information.
 
 | State | Integration Type | Process Documentation |
 | --- | --- | --- |
-| California | Prefilling Links via API call and token | TODO |
+| California | Prefilling Links via API call and token | [Docs](CA/README.md) |
 | Colorado | Tracking Links (full voter file data) via URL Parameter | [Docs](CO/README.md) |
 | Michigan | Full Registration API | TODO |
 | Nevada | Tracking Links | TODO |
