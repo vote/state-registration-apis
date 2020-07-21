@@ -16,6 +16,16 @@ You can learn more about the system from [this brochure](https://www.sos.state.c
 3. You'll hear back from the VRD office within a few days with your acceptance. You'll be given a unique URL to send voters to, and a login to the state FTP server to pull the voter registration data.
 4. 1-3 days later, you'll receive an email with your FTP login credentials. You'll receive two separate emails: one with your username and one with your password. The password may not work -- if that happens, you can use the "reset password" link on the login screen and provide your username to get a reset-password email and create a working password.
 
+## The OVR Link
+
+Once you've been approved by the VRD office, you'll get a URL to send voters to that looks like this: `https://www.sos.state.co.us/voter?vrdid=999999999` (where `999999999` is the VRD ID you've been issued by the state).
+
+There's a couple things you can do with this link:
+
+- You can add a `campaign`, like this: `https://www.sos.state.co.us/voter?vrdid=999999999&campaign=some-id-here`. You can use whatever ID you want for the campaign, and the data you get back from the state will have the campaign ID associated with the record for the voter. At VoteAmerica, for example, we use a unique ID that we can correlate back to the user's session on our website.
+
+- You can also link directly to the voter reigstration page (the default link goes to the voter registration portal, which has a bunch of options other than registering to vote), like this: `https://www.sos.state.co.us/voter/pages/pub/olvr/verifyNewVoter.xhtml?vrdid=999999999` (again, `999999999` is the VRD ID you've been issued). The tracking and data will work just the same.
+
 ## Importing the Data
 
 The data file on the FTP server will be updated every day. The data is provide as a file called `VRD_REPORT.zip`, which is a ZIP archive containing a single `VRD_REPORT.txt` file. This is a tab-separated values file (like a CSV, but with tabs instead of commas).
