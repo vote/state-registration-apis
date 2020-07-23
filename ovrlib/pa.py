@@ -374,8 +374,8 @@ class PAOVRRequest:
                     vals["politicalparty"] = PARTY["other"]
                     vals["otherpoliticalparty"] = party
             elif k == "gender":
-                if v in GENDER:
-                    vals["gender"] = GENDER[v]
+                if v.lower() in GENDER:
+                    vals["gender"] = GENDER[v].lower()
                 elif v.upper() in GENDER.values():
                     vals["gender"] = v.upper()
                 else:
