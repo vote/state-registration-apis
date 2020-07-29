@@ -366,7 +366,7 @@ class PAOVRRequest:
                 party = v.lower()
                 if party in ["democrat"]:
                     party = "democratic"
-                elif party.startswith("none"):
+                elif not party or party.startswith("none"):
                     party = "none (no affiliation)"
                 if party in PARTY:
                     vals["politicalparty"] = PARTY[party]
@@ -374,8 +374,8 @@ class PAOVRRequest:
                     vals["politicalparty"] = PARTY["other"]
                     vals["otherpoliticalparty"] = party
             elif k == "gender":
-                if v in GENDER:
-                    vals["gender"] = GENDER[v]
+                if v.lower() in GENDER:
+                    vals["gender"] = GENDER[v].lower()
                 elif v.upper() in GENDER.values():
                     vals["gender"] = v.upper()
                 else:
