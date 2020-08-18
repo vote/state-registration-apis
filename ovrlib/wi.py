@@ -124,7 +124,7 @@ class WIVoterRegistration:
 
 
 
-def lookup_voter(first_name, last_name, date_of_birth):
+def lookup_voter(first_name, last_name, date_of_birth, **kwargs):
     response = requests.post(
         SEARCH_ENDPOINT,
         headers={
@@ -135,6 +135,7 @@ def lookup_voter(first_name, last_name, date_of_birth):
             "lastName": last_name,
             "birthDate": date_of_birth.strftime("%m/%d/%Y"),
         },
+        **kwargs
     )
     if not response.json().get("Success"):
         return None
@@ -144,12 +145,13 @@ def lookup_voter(first_name, last_name, date_of_birth):
     return r
 
 
-def lookup_polling_place(district_combo_id):
+def lookup_polling_place(district_combo_id, **kwargs):
     response = requests.get(
         POLLING_PLACE_ENDPOINT.format(district_combo_id=district_combo_id),
         headers={
             "content-type": "application/x-www-form-urlencoded",
         },
+        **kwargs
     )
     if not response.json().get("Success"):
         return None
@@ -182,12 +184,13 @@ def lookup_polling_place(district_combo_id):
     )
 
 
-def lookup_ballot_status(voter_id, election_id):
+def lookup_ballot_status(voter_id, election_id, **kwargs):
     response = requests.get(
         BALLOT_ENDPOINT.format(voter_id=voter_id, election_id=election_id),
         headers={
             "content-type": "application/x-www-form-urlencoded",
         },
+        **kwargs
     )
     if not response.json().get("Success"):
         return None

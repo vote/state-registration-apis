@@ -1,5 +1,6 @@
 # ovrlib
 requests
+requests[socks]
 lxml
 setuptools
 dataclasses
