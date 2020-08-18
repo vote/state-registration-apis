@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 import datetime
+
 import ovrlib.wi
 
-voters = ovrlib.wi.lookup_voter(first_name="sage", last_name="weil", date_of_birth=datetime.datetime(1978, 3, 17))
+voters = ovrlib.wi.lookup_voter(
+    first_name="sage", last_name="weil", date_of_birth=datetime.datetime(1978, 3, 17)
+)
 print(voters)
 
 election = ovrlib.wi.lookup_polling_place(voters[0].district_combo_id)

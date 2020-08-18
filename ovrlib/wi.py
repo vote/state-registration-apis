@@ -1,9 +1,12 @@
 import datetime
-import requests
-from typing import Optional
 from dataclasses import dataclass
+from typing import Optional
 
-SEARCH_ENDPOINT = "https://myvote.wi.gov/DesktopModules/GabMyVoteModules/api/voter/search"
+import requests
+
+SEARCH_ENDPOINT = (
+    "https://myvote.wi.gov/DesktopModules/GabMyVoteModules/api/voter/search"
+)
 POLLING_PLACE_ENDPOINT = "https://myvote.wi.gov/DesktopModules/GabMyVoteModules/api/address/pollingplace/{district_combo_id}"
 BALLOT_ENDPOINT = "https://myvote.wi.gov/DesktopModules/GabMyVoteModules/api/absentee/progressbarinfo/{voter_id}?electionid={election_id}"
 
@@ -27,14 +30,19 @@ class WIAbsenteeBallotStatus:
     def from_api_response(cls, info):
         def from_date(s):
             if s:
-                return datetime.datetime.strptime(s, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=datetime.timezone.utc)
+                return datetime.datetime.strptime(s, "%Y-%m-%dT%H:%M:%SZ").replace(
+                    tzinfo=datetime.timezone.utc
+                )
             return None
+
         return cls(
             request_submitted=from_date(info.get("absenteeRequestSubmittedDate")),
             request_approved=from_date(info.get("absenteeRequestApprovedDate")),
             created=from_date(info.get("absenteeBallotCreatedDate")),
             sent=from_date(info.get("absenteeBallotSentDate")),
-            expected_delivery=from_date(info.get("absenteeBallotAnticipatedDeliveryDate")),
+            expected_delivery=from_date(
+                info.get("absenteeBallotAnticipatedDeliveryDate")
+            ),
             received=from_date(info.get("completedAbsenteeBallotReceivedDate")),
             returned=from_date(info.get("dateBallotReturned")),
             ballot_rejected=info.get("isDateBallotReturnedRejected"),
@@ -42,6 +50,7 @@ class WIAbsenteeBallotStatus:
             ballot_received_issue=info.get("hasAbsenteeBallotReceivedIssue"),
             foreign_address=info.get("isForeignAddress"),
         )
+
 
 @dataclass
 class WIElection:
@@ -78,12 +87,11 @@ class WIVoterRegistration:
     registration_date: datetime.date
     registration_source: str
 
-    voter_reg_number: str    # NOTE: should this be an integer?
+    voter_reg_number: str  # NOTE: should this be an integer?
 
     voter_id: str
     district_combo_id: str
     jurisdiction_id: str
-
 
     @property
     def active(self):
@@ -113,7 +121,9 @@ class WIVoterRegistration:
             zipcode=info.get("postalCode"),
             status=info.get("voterStatusName"),
             status_reason=info.get("statusReasonName"),
-            registration_date=datetime.datetime.strptime(info.get("registrationDate"), "%m/%d/%Y"),
+            registration_date=datetime.datetime.strptime(
+                info.get("registrationDate"), "%m/%d/%Y"
+            ),
             registration_source=info.get("registrationSource"),
             voter_reg_number=info.get("voterRegNumber"),
             voter_id=info.get("voterID"),
@@ -123,13 +133,10 @@ class WIVoterRegistration:
         return r
 
 
-
 def lookup_voter(first_name, last_name, date_of_birth, **kwargs):
     response = requests.post(
         SEARCH_ENDPOINT,
-        headers={
-            "content-type": "application/x-www-form-urlencoded",
-        },
+        headers={"content-type": "application/x-www-form-urlencoded",},
         data={
             "firstName": first_name,
             "lastName": last_name,
@@ -148,9 +155,7 @@ def lookup_voter(first_name, last_name, date_of_birth, **kwargs):
 def lookup_polling_place(district_combo_id, **kwargs):
     response = requests.get(
         POLLING_PLACE_ENDPOINT.format(district_combo_id=district_combo_id),
-        headers={
-            "content-type": "application/x-www-form-urlencoded",
-        },
+        headers={"content-type": "application/x-www-form-urlencoded",},
         **kwargs
     )
     if not response.json().get("Success"):
@@ -187,9 +192,7 @@ def lookup_polling_place(district_combo_id, **kwargs):
 def lookup_ballot_status(voter_id, election_id, **kwargs):
     response = requests.get(
         BALLOT_ENDPOINT.format(voter_id=voter_id, election_id=election_id),
-        headers={
-            "content-type": "application/x-www-form-urlencoded",
-        },
+        headers={"content-type": "application/x-www-form-urlencoded",},
         **kwargs
     )
     if not response.json().get("Success"):
