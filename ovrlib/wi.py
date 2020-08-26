@@ -123,7 +123,7 @@ class WIVoterRegistration:
             status_reason=info.get("statusReasonName"),
             registration_date=datetime.datetime.strptime(
                 info.get("registrationDate"), "%m/%d/%Y"
-            ),
+            ).date(),
             registration_source=info.get("registrationSource"),
             voter_reg_number=info.get("voterRegNumber"),
             voter_id=info.get("voterID"),
