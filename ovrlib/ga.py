@@ -1,6 +1,7 @@
 import datetime
 import re
 from dataclasses import dataclass
+from typing import Optional
 
 import requests
 
@@ -233,7 +234,7 @@ class GAVoterRegistration:
 
 def lookup_voter(
     first_name: str, last_name: str, date_of_birth: datetime.date, county: str, **kwargs
-):
+) -> Optional[GAVoterRegistration]:
     county_id = COUNTIES.get(county.upper())
     if not county_id:
         raise GAInvalidCounty(f"{county} is not a recognized county")
