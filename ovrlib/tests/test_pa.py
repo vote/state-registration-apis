@@ -3,7 +3,14 @@ import datetime
 import pytest  # type: ignore
 import responses  # type: ignore
 
-from ..pa import STAGING_URL, PAOVRElectionInfo, PAOVRRequest, PAOVRSession
+from ..pa import (
+    STAGING_URL,
+    PAOVRElectionInfo,
+    PAOVRRequest,
+    PAOVRSession,
+    PACounty,
+    PAMunicipality,
+)
 
 
 @pytest.mark.parametrize(
@@ -334,3 +341,66 @@ def test_simple():
 def test_register_prepare_body(reg, body):
     out = reg.to_request_body()
     assert out == body
+
+
+@responses.activate
+def test_get_counties():
+    api_key = "abc"
+    responses.add(
+        responses.GET,
+        f"{STAGING_URL}?JSONv2&sysparm_AuthKey={api_key}&sysparm_action=GETAPPLICATIONSETUP&sysparm_Language=0",
+        match_querystring=True,
+        json="<NewDataSet>  <County>    <countyID>0</countyID>    <Countyname />  </County>  <County>    <countyID>2290</countyID>    <Countyname>ADAMS</Countyname>  </County>  <County>    <countyID>2291</countyID>    <Countyname>ALLEGHENY</Countyname>  </County> </NewDataSet>",
+        status=200,
+    )
+    responses.add(
+        responses.GET,
+        f"{STAGING_URL}?JSONv2&sysparm_AuthKey={api_key}&sysparm_action=GETERRORVALUES&sysparm_Language=0",
+        match_querystring=True,
+        json="<OVRLookupData>  <MessageText>    <ErrorCode>VR_WAPI_InvalidAccessKey</ErrorCode>    <ErrorText>Access Key is Invalid.</ErrorText>  </MessageText></OVRLookupData>",
+        status=200,
+    )
+    responses.add(
+        responses.GET,
+        f"{STAGING_URL}?JSONv2&sysparm_AuthKey={api_key}&sysparm_action=GETXMLTEMPLATE&sysparm_Language=0",
+        match_querystring=True,
+        json="<APIOnlineApplicationData xmlns='OVRexternaldata'>  <record>    <batch></batch>    <FirstName></FirstName>    <MiddleName></MiddleName>    <LastName></LastName>    <TitleSuffix></TitleSuffix>    <united-states-citizen></united-states-citizen>    <eighteen-on-election-day></eighteen-on-election-day>    <isnewregistration></isnewregistration>    <name-update></name-update>    <address-update></address-update>    <ispartychange></ispartychange>    <isfederalvoter></isfederalvoter>    <DateOfBirth></DateOfBirth>    <Gender></Gender>    <Ethnicity></Ethnicity>    <Phone></Phone>    <Email></Email>    <streetaddress></streetaddress>    <streetaddress2></streetaddress2>    <unittype></unittype>    <unitnumber></unitnumber>    <city></city>    <zipcode></zipcode>    <donthavePermtOrResAddress></donthavePermtOrResAddress>    <county></county>    <municipality></municipality>    <mailingaddress></mailingaddress>    <mailingcity></mailingcity>    <mailingstate></mailingstate>    <mailingzipcode></mailingzipcode>    <drivers-license></drivers-license>    <ssn4></ssn4>    <signatureimage></signatureimage>    <continueAppSubmit></continueAppSubmit>    <donthavebothDLandSSN></donthavebothDLandSSN>    <politicalparty></politicalparty>    <otherpoliticalparty></otherpoliticalparty>    <needhelptovote></needhelptovote>    <typeofassistance></typeofassistance>    <preferredlanguage></preferredlanguage>    <voterregnumber></voterregnumber>    <previousreglastname></previousreglastname>    <previousregfirstname></previousregfirstname>    <previousregmiddlename></previousregmiddlename>    <previousregaddress></previousregaddress>    <previousregcity></previousregcity>    <previousregstate></previousregstate>    <previousregzip></previousregzip>    <previousregcounty></previousregcounty>    <previousregyear></previousregyear>    <declaration1></declaration1>    <assistedpersonname></assistedpersonname>    <assistedpersonAddress></assistedpersonAddress>    <assistedpersonphone></assistedpersonphone>    <assistancedeclaration2></assistancedeclaration2>    <ispollworker></ispollworker>    <bilingualinterpreter></bilingualinterpreter>    <pollworkerspeaklang></pollworkerspeaklang>    <secondEmail></secondEmail>    <ismailin></ismailin>    <istransferpermanent></istransferpermanent>    <mailinaddresstype></mailinaddresstype>    <mailinballotaddr></mailinballotaddr>    <mailincity></mailincity>    <mailinstate></mailinstate>    <mailinzipcode></mailinzipcode>    <mailinward></mailinward>    <mailinlivedsince></mailinlivedsince>    <mailindeclaration></mailindeclaration>  </record></APIOnlineApplicationData>",
+        status=200,
+    )
+    responses.add(
+        responses.GET,
+        f"{STAGING_URL}?JSONv2&sysparm_AuthKey={api_key}&sysparm_action=GETMUNICIPALITIES&sysparm_Language=0&sysparm_County=ADAMS",
+        match_querystring=True,
+        json="<OVRLookupData>  <Municipality>    <MunicipalityType>0</MunicipalityType>    <MunicipalityID/>    <MunicipalityIDname/>    <CountyID>0</CountyID>    <CountyName/>  </Municipality>  <Municipality>    <MunicipalityType>4</MunicipalityType>    <MunicipalityID>BR1</MunicipalityID>    <MunicipalityIDname>ABBOTTSTOWN</MunicipalityIDname>    <CountyID>2290</CountyID>    <CountyName>ADAMS</CountyName>  </Municipality>  <Municipality>    <MunicipalityType>4</MunicipalityType>    <MunicipalityID>BR2</MunicipalityID>    <MunicipalityIDname>ARENDTSVILLE</MunicipalityIDname>    <CountyID>2290</CountyID>    <CountyName>ADAMS</CountyName>  </Municipality>  </OVRLookupData>",
+        status=200,
+    )
+    responses.add(
+        responses.GET,
+        f"{STAGING_URL}?JSONv2&sysparm_AuthKey={api_key}&sysparm_action=GETMUNICIPALITIES&sysparm_Language=0&sysparm_County=ALLEGHENY",
+        match_querystring=True,
+        json="<OVRLookupData>  <Municipality>    <MunicipalityType>0</MunicipalityType>    <MunicipalityID/>    <MunicipalityIDname/>    <CountyID>0</CountyID>    <CountyName/>  </Municipality>  <Municipality>    <MunicipalityType>4</MunicipalityType>    <MunicipalityID>MN101</MunicipalityID>    <MunicipalityIDname>ALEPPO</MunicipalityIDname>    <CountyID>2291</CountyID>    <CountyName>ALLEGHENY</CountyName>  </Municipality>  <Municipality>    <MunicipalityType>4</MunicipalityType>    <MunicipalityID>MN102</MunicipalityID>    <MunicipalityIDname>ASPINWALL</MunicipalityIDname>    <CountyID>2291</CountyID>    <CountyName>ALLEGHENY</CountyName>  </Municipality></OVRLookupData>",
+        status=200,
+    )
+
+    s = PAOVRSession(api_key="abc", staging=True)
+    r = s.fetch_counties_and_municipalities()
+
+    assert len(responses.calls) == 5
+    assert r == [
+        PACounty(
+            county_id="2290",
+            county_name="ADAMS",
+            municipalities=[
+                PAMunicipality(municipality_id="BR1", municipality_name="ABBOTTSTOWN"),
+                PAMunicipality(municipality_id="BR2", municipality_name="ARENDTSVILLE"),
+            ],
+        ),
+        PACounty(
+            county_id="2291",
+            county_name="ALLEGHENY",
+            municipalities=[
+                PAMunicipality(municipality_id="MN101", municipality_name="ALEPPO"),
+                PAMunicipality(municipality_id="MN102", municipality_name="ASPINWALL"),
+            ],
+        ),
+    ]
