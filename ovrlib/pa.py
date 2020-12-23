@@ -4,7 +4,8 @@ import json
 import logging
 import re
 from dataclasses import dataclass
-from typing import Dict, Optional
+from typing import Dict, Optional, List
+import urllib.parse
 
 import requests
 from lxml import etree  # type: ignore
@@ -177,6 +178,19 @@ class PAOVRElectionInfo:
     vbm_request_deadline: datetime.datetime
     vbm_request_declaration: str
     vbm_receipt_deadline: datetime.datetime
+
+
+@dataclass
+class PAMunicipality:
+    municipality_id: str
+    municipality_name: str
+
+
+@dataclass
+class PACounty:
+    county_id: str
+    county_name: str
+    municipalities: List[PAMunicipality]
 
 
 @dataclass
@@ -470,16 +484,30 @@ class PAOVRSession:
         self.staging = staging
         self.language = language
 
-    def get_url(self, action: str) -> str:
+    def get_url(self, action: str, params: Dict[str, str] = {}) -> str:
+        url_params = {
+            "AuthKey": self.api_key,
+            "action": action,
+            "Language": self.language,
+            **params,
+        }
+
+        url_params_encoded = urllib.parse.urlencode(
+            {f"sysparm_{k}": v for k, v in url_params.items()}
+        )
+
         if self.staging:
             url = STAGING_URL
         else:
             url = PROD_URL
-        url += f"?JSONv2&sysparm_AuthKey={self.api_key}&sysparm_action={action}&sysparm_Language={self.language}"
+
+        url += f"?JSONv2&{url_params_encoded}"
         return url
 
-    def do_request_unparsed(self, action: str, data=None) -> str:
-        url = self.get_url(action)
+    def do_request_unparsed(
+        self, action: str, data=None, params: Dict[str, str] = {}
+    ) -> str:
+        url = self.get_url(action, params)
         if data:
             response = requests.post(
                 url,
@@ -500,8 +528,10 @@ class PAOVRSession:
 
         return response.text
 
-    def do_request(self, action: str, data=None) -> etree.Element:
-        xml_str = json.loads(self.do_request_unparsed(action, data))
+    def do_request(
+        self, action: str, data=None, params: Dict[str, str] = {}
+    ) -> etree.Element:
+        xml_str = json.loads(self.do_request_unparsed(action, data, params))
         root = etree.fromstring(xml_str)
 
         # check for errors only
@@ -672,6 +702,36 @@ class PAOVRSession:
         rval["xml_template"] = json.loads(self.do_request_unparsed("GETXMLTEMPLATE"))
 
         return rval
+
+    def fetch_counties_and_municipalities(self) -> List[PACounty]:
+        counties = []
+        for c_name, c_id in self.fetch_constants()["county"].items():
+            municipalities: List[PAMunicipality] = []
+            m_data = self.do_request(
+                "GETMUNICIPALITIES", params={"County": c_name.upper()}
+            )
+
+            assert m_data.tag == "OVRLookupData"
+            for municipality in m_data:
+                assert municipality.tag == "Municipality"
+                m_id = None
+                m_name = None
+                for m_prop in municipality:
+                    if m_prop.tag == "MunicipalityIDname":
+                        m_name = m_prop.text
+                    elif m_prop.tag == "MunicipalityID":
+                        m_id = m_prop.text
+
+                if m_id and m_name:
+                    municipalities.append(
+                        PAMunicipality(
+                            municipality_id=m_id, municipality_name=m_name.upper()
+                        )
+                    )
+
+            counties.append(PACounty(c_id, c_name.upper(), municipalities))
+
+        return counties
 
     def register(self, registration: PAOVRRequest) -> PAOVRResponse:
         """
