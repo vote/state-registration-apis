@@ -9,9 +9,9 @@ This repo contains:
 
 ## Background
 
-Most states in the US provide online voter registration (OVR) systems (you can
+Most states in the US provide online voter registration (OVR) systems. You can
 find links to all of these systems in our
-[Election Information API](https://docs.voteamerica.com/api/)).
+[Election Information API](https://docs.voteamerica.com/api/).
 
 If you are building a website or a system to direct voters to these registration
 systems, a few states have gone beyond just letting you link to their OVR
@@ -53,11 +53,13 @@ This repository is an attempt to make this process easier to navigate. It
 includes:
 
 - A listing of which states have systems you can integrate with
-- Details instructions on how to get access to these systems -- who to call or
-  email, what approvals you'll need, and how long it typically takes.
-- ovrlib, a clean, readable Python library for interacting with the Full Registration
-  APIs and the prefilling token APIs that you can use as-is, or read the source
-  code of to understand how the systems work. For many of these systems, there
+- Detailed instructions on how to get access to these systems
+  - Who to call or email
+  - What approvals you'll need
+  - How long it typically takes
+- [ovrlib](#ovrlib), a clean, readable Python library for interacting with the Full Registration
+  APIs and the prefilling token APIs that you can use as-is, or read [the source
+  code](ovrlib/) of to understand how the systems work. For many of these systems, there
   are not official reference implementations so we are trying to provide good
   reference implementations here.
 
@@ -69,7 +71,7 @@ in this repository. You are responsible for reading, understanding, and complyin
 with any agreements you make with the states while setting up these integrations.
 
 We provide the software in this repository as-is, without
-warranty of any kind, as laid out in the LICENSE file. While we hope that
+warranty of any kind, as laid out in the [LICENSE](LICENSE.txt) file. While we hope that
 the code in the repository is useful, you are ultimately responsible for any
 systems you build using this code, and for complying with all local, state, and
 federal regulations around election and voter registration systems.
@@ -94,7 +96,7 @@ information.
 
 `ovrlib` is a python library for interacting with state's OVR APIs.
 Currently, it only supports Pennsylvania. The source code is in [this repository](ovrlib/),
-and the package is published on [PyPi](https://pypi.org/project/ovrlib/)
+and the package is published on [PyPi](https://pypi.org/project/ovrlib/).
 
 ### Synopsis
 
