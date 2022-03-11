@@ -131,3 +131,7 @@ dmypy.json
 # editor backups
 *~
 *.swp
+
+# Office files
+~$*.doc*
+Backup of *.doc*
