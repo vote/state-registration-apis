@@ -84,6 +84,7 @@ information.
 
 | State        | Integration Type                                        | Process Documentation |
 | ------------ | ------------------------------------------------------- | --------------------- |
+| Arizona      | Tracking Links                                          | [Docs][az]            |
 | California   | Prefilling Links via API call and token                 | [Docs](CA/README.md)  |
 | Colorado     | Tracking Links (full voter file data) via URL Parameter | [Docs](CO/README.md)  |
 | Michigan     | Tracking Links and Full Registration API                | [Docs](MI/README.md)  |
@@ -91,6 +92,8 @@ information.
 | Pennsylvania | Full Registration API                                   | [Docs](PA/README.md)  |
 | Virginia     | Full Registration API                                   | TODO                  |
 | Washington   | Tracking Links (aggregate API) via URL parameter        | [Docs](WA/README.md)  |
+
+[az]: https://azsos.gov/elections/online-voter-registration-unique-url-program
 
 ## ovrlib
 
