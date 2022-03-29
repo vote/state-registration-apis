@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "state-registration-apis"
+version = "0.1.0"
+description = "Library to interface with per-state online voter registration APIs"
+authors = ["VoteAmerica <tech@votamerica.com>"]
+license = "Apache License, Version 2.0"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+requests = "^2.27.1"
+lxml = "^4.8.0"
+setuptools = "^61.2.0"
+
+[tool.poetry.dev-dependencies]
+autoflake = "^1.4"
+isort = "^5.10.1"
+black = "^22.3.0"
+twine = "^3.8.0"
+pytest = "^7.1.1"
+responses = "^0.20.0"
+mypy = "^0.942"
+types-requests = "^2.27.15"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
