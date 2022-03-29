@@ -127,3 +127,8 @@ request = ovrlib.pa.PAOVRRequest(
 )
 response = session.register(req)
 ```
+
+## Development
+1. Install [Poetry](https://python-poetry.org/): `pip install poetry`
+2. Install dependencies: `poetry install`
+3. Run mypy type checker and the tests: `poetry run make test`
