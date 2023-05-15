@@ -1,6 +1,6 @@
 # Washington
 
-Washinton can issue you a organization ID. You can then send voter
+Washington can issue you a organization ID. You can then send voter
 to the state website, passing this organization ID as a URL parameter.
 
 You can find aggregate statistics on how many voter are registering
