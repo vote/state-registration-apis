@@ -10,4 +10,3 @@ allowing you to track an applicant who registers to vote by using your custom UR
 1. Email victoria.mainwaring@elections.virginia.gov with your organization's name, email, phone number, and the URL that you'd like to use.
 2. Virginia's Department of Elections IT Department will create a custom URL.
 3. Once the URL is ready, you can then track voter registrations completed via your custom URL.
-
