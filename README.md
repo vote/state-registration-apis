@@ -87,9 +87,10 @@ information.
 | Arizona      | Tracking Links                                          | [Docs][az]            |
 | California   | Prefilling Links via API call and token                 | [Docs](CA/README.md)  |
 | Colorado     | Tracking Links (full voter file data) via URL Parameter | [Docs](CO/README.md)  |
+| Maryland     | Tracking Links                                          | [Docs](MD/README.md)  |
 | Michigan     | Tracking Links and Full Registration API                | [Docs](MI/README.md)  |
 | Pennsylvania | Full Registration API                                   | [Docs](PA/README.md)  |
-| Virginia     | Tracking links                                          | [Docs](VA/README.md)  |
+| Virginia     | Tracking Links                                          | [Docs](VA/README.md)  |
 | Washington   | Tracking Links (aggregate API) via URL parameter        | [Docs](WA/README.md)  |
 
 [az]: https://azsos.gov/elections/online-voter-registration-unique-url-program
