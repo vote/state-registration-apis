@@ -8,7 +8,7 @@ allowing you to track an applicant who registers to vote by using your custom UR
 ## Process
 
 1. Request a custom URL by emailing info.sbe@maryland.gov or melissia.dorsey1@maryland.gov (valid as of Oct 2023) with your organization's name.
-2. Virginia's Department of Elections IT Department will create a custom URL.
+2. Maryland's Department of Elections IT Department will create a custom URL.
 3. Once the URL is ready, you can then track voter registrations completed via your custom URL.
 
 ## Gathering the Data
