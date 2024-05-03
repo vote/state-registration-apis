@@ -83,7 +83,7 @@ find a separate markdown file in this repository for each state with more
 information.
 
 | State        | Integration Type                                        | Process Documentation |
-| ------------ | ------------------------------------------------------- | --------------------- |
+|--------------|---------------------------------------------------------|-----------------------|
 | Arizona      | Tracking Links                                          | [Docs][az]            |
 | California   | Prefilling Links via API call and token                 | [Docs](CA/README.md)  |
 | Colorado     | Tracking Links (full voter file data) via URL Parameter | [Docs](CO/README.md)  |
