@@ -136,7 +136,9 @@ class WIVoterRegistration:
 def lookup_voter(first_name, last_name, date_of_birth, **kwargs):
     response = requests.post(
         SEARCH_ENDPOINT,
-        headers={"content-type": "application/x-www-form-urlencoded",},
+        headers={
+            "content-type": "application/x-www-form-urlencoded",
+        },
         data={
             "firstName": first_name,
             "lastName": last_name,
@@ -155,7 +157,9 @@ def lookup_voter(first_name, last_name, date_of_birth, **kwargs):
 def lookup_polling_place(district_combo_id, **kwargs):
     response = requests.get(
         POLLING_PLACE_ENDPOINT.format(district_combo_id=district_combo_id),
-        headers={"content-type": "application/x-www-form-urlencoded",},
+        headers={
+            "content-type": "application/x-www-form-urlencoded",
+        },
         **kwargs
     )
     if not response.json().get("Success"):
@@ -192,7 +196,9 @@ def lookup_polling_place(district_combo_id, **kwargs):
 def lookup_ballot_status(voter_id, election_id, **kwargs):
     response = requests.get(
         BALLOT_ENDPOINT.format(voter_id=voter_id, election_id=election_id),
-        headers={"content-type": "application/x-www-form-urlencoded",},
+        headers={
+            "content-type": "application/x-www-form-urlencoded",
+        },
         **kwargs
     )
     if not response.json().get("Success"):

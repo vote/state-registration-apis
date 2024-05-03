@@ -436,9 +436,9 @@ class PAOVRRequest:
             sig_type = self.signature_type
             if sig_type == "jpeg":
                 sig_type = "jpg"
-            vals[
-                "signatureimage"
-            ] = f"data:image/{sig_type};base64,{base64.b64encode(self.signature).decode('utf-8')}"
+            vals["signatureimage"] = (
+                f"data:image/{sig_type};base64,{base64.b64encode(self.signature).decode('utf-8')}"
+            )
 
         root = etree.fromstring(XML_TEMPLATE)
         for record in root:

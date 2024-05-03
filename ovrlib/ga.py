@@ -240,7 +240,9 @@ def lookup_voter(
         raise GAInvalidCounty(f"{county} is not a recognized county")
     response = requests.post(
         QUERY_ENDPOINT,
-        headers={"content-type": "application/x-www-form-urlencoded",},
+        headers={
+            "content-type": "application/x-www-form-urlencoded",
+        },
         data={
             "firstName": first_name,
             "lastName": last_name,
